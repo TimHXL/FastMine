@@ -1,5 +1,6 @@
 package com.timhxl.fastmine.player;
 import com.timhxl.fastmine.config.ConfigManager;
+import com.timhxl.fastmine.config.FastMineConfig;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -59,6 +60,41 @@ public final class PlayerSettingsService {
     public synchronized void update(UUID playerId, PlayerFastMineSettings settings) {
         settingsByPlayer.put(playerId, settings);
         save();
+    }
+
+    /**
+     * 接收客户端提交的个人设置，并以服务器全局限制进行校验。
+     *
+     * <p>客户端界面仅是操作入口；该方法是玩家设置修改的服务端权威边界。</p>
+     *
+     * @throws IllegalArgumentException 当范围尺寸不符合服务器规则时抛出
+     */
+    public synchronized PlayerFastMineSettings updateFromClient(UUID playerId, boolean veinEnabled, boolean areaEnabled,
+                                                                 int areaWidth, int areaHeight, int areaDepth) {
+        FastMineConfig config = configManager.getConfig();
+
+        if (!isValidOddSize(areaWidth, config.maxAreaWidth)
+                || !isValidOddSize(areaHeight, config.maxAreaHeight)
+                || !isValidOddSize(areaDepth, config.maxAreaDepth)) {
+            throw new IllegalArgumentException("Invalid FastMine area size from client.");
+        }
+
+        PlayerFastMineSettings updated = new PlayerFastMineSettings(
+                veinEnabled,
+                areaEnabled,
+                areaWidth,
+                areaHeight,
+                areaDepth
+        );
+        update(playerId, updated);
+        return updated;
+    }
+
+    /**
+     * 判断范围尺寸是否为服务器允许的正奇数。
+     */
+    private static boolean isValidOddSize(int value, int maximum) {
+        return value > 0 && value <= maximum && value % 2 != 0;
     }
 
     /**

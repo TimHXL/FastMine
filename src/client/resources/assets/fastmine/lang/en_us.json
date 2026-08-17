@@ -1,0 +1,18 @@
+{
+  "key.category.fastmine.keybinds": "FastMine",
+  "key.fastmine.open_settings": "Open FastMine settings",
+  "screen.fastmine.title": "FastMine Settings",
+  "screen.fastmine.loading": "Requesting server settings...",
+  "screen.fastmine.waiting": "Waiting for server...",
+  "screen.fastmine.vein": "Vein Mining: %s",
+  "screen.fastmine.area": "Area Mining: %s",
+  "screen.fastmine.area_size": "Area size",
+  "screen.fastmine.admin_settings": "Administrator settings",
+  "screen.fastmine.width": "Width: %s",
+  "screen.fastmine.height": "Height: %s",
+  "screen.fastmine.depth": "Depth: %s",
+  "screen.fastmine.vein_sneak": "Vein mining requires crouching: %s",
+  "screen.fastmine.area_sneak": "Area mining requires crouching: %s",
+  "screen.fastmine.on": "ON",
+  "screen.fastmine.off": "OFF"
+}

@@ -82,7 +82,9 @@ public final class MiningEventHandler {
             return;
         }
 
-        if (context.playerSettings().areaEnabled() && miningDirection != null) {
+        if (context.playerSettings().areaEnabled()
+                && (!context.config().areaMustSneak || serverPlayer.isCrouching())
+                && miningDirection != null) {
             AreaMiningExecutor.execute(context, miningDirection);
         }
     }

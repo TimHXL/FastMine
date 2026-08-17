@@ -41,6 +41,11 @@ public final class FastMineCommands {
                         .then(Commands.literal("area")
                                 .then(Commands.literal("on").executes(context -> executeSetArea(context, true)))
                                 .then(Commands.literal("off").executes(context -> executeSetArea(context, false)))
+                                .then(Commands.literal("sneak")
+                                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                                        .executes(FastMineCommands::executeAreaSneakStatus)
+                                        .then(Commands.literal("on").executes(context -> executeSetAreaMustSneak(context, true)))
+                                        .then(Commands.literal("off").executes(context -> executeSetAreaMustSneak(context, false))))
                                 .then(Commands.literal("size")
                                         .then(Commands.argument("width", IntegerArgumentType.integer(1))
                                                 .then(Commands.argument("height", IntegerArgumentType.integer(1))
@@ -114,6 +119,31 @@ public final class FastMineCommands {
         context.getSource().sendSuccess(() -> Component.literal(
                 "FastMine: area mining is now %s.".formatted(enabled ? "ON" : "OFF")
         ), false);
+        return 1;
+    }
+
+    /**
+     * 输出服务器全局的范围挖矿蹲下触发状态。
+     */
+    private static int executeAreaSneakStatus(CommandContext<CommandSourceStack> context) {
+        boolean mustSneak = FastMineMod.getConfigManager().getConfig().areaMustSneak;
+        context.getSource().sendSuccess(() -> Component.literal(
+                "FastMine: area mining %s crouching."
+                        .formatted(mustSneak ? "requires" : "does not require")
+        ), false);
+        return 1;
+    }
+
+    /**
+     * 修改服务器全局的范围挖矿蹲下触发规则，并立即持久化到 config.json。
+     */
+    private static int executeSetAreaMustSneak(CommandContext<CommandSourceStack> context, boolean mustSneak) {
+        FastMineMod.getConfigManager().getConfig().areaMustSneak = mustSneak;
+        FastMineMod.getConfigManager().save();
+        context.getSource().sendSuccess(() -> Component.literal(
+                "FastMine: area mining %s crouching."
+                        .formatted(mustSneak ? "now requires" : "no longer requires")
+        ), true);
         return 1;
     }
 

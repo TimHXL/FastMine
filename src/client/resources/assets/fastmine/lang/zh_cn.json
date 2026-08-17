@@ -1,0 +1,18 @@
+{
+  "key.category.fastmine.keybinds": "FastMine",
+  "key.fastmine.open_settings": "打开 FastMine 设置",
+  "screen.fastmine.title": "FastMine 设置",
+  "screen.fastmine.loading": "正在读取服务器设置...",
+  "screen.fastmine.waiting": "正在等待服务器...",
+  "screen.fastmine.vein": "连锁挖矿：%s",
+  "screen.fastmine.area": "范围挖矿：%s",
+  "screen.fastmine.area_size": "范围尺寸",
+  "screen.fastmine.admin_settings": "管理员设置",
+  "screen.fastmine.width": "宽：%s",
+  "screen.fastmine.height": "高：%s",
+  "screen.fastmine.depth": "深：%s",
+  "screen.fastmine.vein_sneak": "连锁挖矿需要蹲下：%s",
+  "screen.fastmine.area_sneak": "范围挖矿需要蹲下：%s",
+  "screen.fastmine.on": "开启",
+  "screen.fastmine.off": "关闭"
+}

@@ -3,6 +3,7 @@ package com.timhxl.fastmine;
 import com.timhxl.fastmine.command.FastMineCommands;
 import com.timhxl.fastmine.config.ConfigManager;
 import com.timhxl.fastmine.mining.MiningEventHandler;
+import com.timhxl.fastmine.network.FastMineNetworking;
 import com.timhxl.fastmine.player.PlayerSettingsService;
 import com.timhxl.fastmine.vein.config.VeinMiningConfigManager;
 import com.timhxl.fastmine.vein.config.VeinMiningRuleRegistry;
@@ -92,6 +93,7 @@ public final class FastMineMod implements ModInitializer {
         CONFIG_MANAGER.load();
         PLAYER_SETTINGS_SERVICE.load();
         VEIN_MINING_CONFIG_MANAGER.load();
+        FastMineNetworking.registerServer();
         ServerLifecycleEvents.SERVER_STARTED.register(VEIN_MINING_RULE_REGISTRY::reload);
         FastMineCommands.register();
         MiningEventHandler.register();

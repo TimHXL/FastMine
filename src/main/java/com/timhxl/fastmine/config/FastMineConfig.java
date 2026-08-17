@@ -27,6 +27,13 @@ public final class FastMineConfig {
     public boolean defaultAreaEnabled = false;
 
     /**
+     * 范围挖矿是否必须在玩家蹲下时才触发。
+     *
+     * <p>这是服务器全局规则；默认 false 以保持已有服务器的行为不变。</p>
+     */
+    public boolean areaMustSneak = false;
+
+    /**
      * 新玩家默认范围宽度。
      */
     public int defaultAreaWidth = 3;
