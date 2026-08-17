@@ -1,0 +1,11 @@
+[
+  {
+    "name": "Ores",
+    "blocks": [
+      "#c:ores"
+    ],
+    "tools": [
+      "#minecraft:pickaxes"
+    ]
+  }
+]

@@ -1,5 +1,5 @@
 package com.timhxl.fastmine.player;
-
+import com.timhxl.fastmine.config.ConfigManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -27,10 +27,12 @@ public final class PlayerSettingsService {
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final Logger logger;
     private final Path settingsPath;
+    private final ConfigManager configManager;
 
-    public PlayerSettingsService(Path settingsPath, Logger logger) {
+    public PlayerSettingsService(Path settingsPath, Logger logger, ConfigManager configManager) {
         this.settingsPath = settingsPath;
         this.logger = logger;
+        this.configManager = configManager;
     }
 
     /**
@@ -43,7 +45,9 @@ public final class PlayerSettingsService {
             return settings;
         }
 
-        PlayerFastMineSettings defaultSettings = PlayerFastMineSettings.createDefault();
+        PlayerFastMineSettings defaultSettings = PlayerFastMineSettings.createDefault(
+                configManager.getConfig()
+        );
         settingsByPlayer.put(playerId, defaultSettings);
         save();
         return defaultSettings;
