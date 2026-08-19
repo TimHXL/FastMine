@@ -24,6 +24,8 @@ import java.util.Set;
  * settings.json、blocks.json 和 groups.json。</p>
  */
 public final class VeinMiningConfigManager {
+    private static final int MAX_GROUPS = 256;
+    private static final int MAX_ENTRIES_PER_GROUP = 512;
     private static final Type STRING_SET_TYPE = new TypeToken<LinkedHashSet<String>>() {
     }.getType();
     private static final Type GROUP_LIST_TYPE = new TypeToken<ArrayList<VeinMiningGroup>>() {
@@ -60,6 +62,50 @@ public final class VeinMiningConfigManager {
         return List.copyOf(groups);
     }
 
+    /** 创建一个空的连锁采集组；由服务端管理员界面调用。 */
+    public boolean createGroup(String name) {
+        String normalizedName = name == null ? "" : name.strip();
+        if (normalizedName.isEmpty() || normalizedName.length() > 64 || groups.size() >= MAX_GROUPS) {
+            return false;
+        }
+        if (groups.stream().anyMatch(group -> group.name.equalsIgnoreCase(normalizedName))) {
+            return false;
+        }
+        VeinMiningGroup group = new VeinMiningGroup();
+        group.name = normalizedName;
+        groups.add(group);
+        return true;
+    }
+
+    /** 删除指定组。至少保留一组，避免下次启动时意外恢复默认组。 */
+    public boolean deleteGroup(int groupIndex) {
+        if (groups.size() <= 1 || groupIndex < 0 || groupIndex >= groups.size()) {
+            return false;
+        }
+        groups.remove(groupIndex);
+        return true;
+    }
+
+    /** 向指定组加入一个已由网络层校验过的方块标识符。 */
+    public boolean addBlock(int groupIndex, String identifier) {
+        return addEntry(groupIndex, identifier, true);
+    }
+
+    /** 向指定组加入一个已由网络层校验过的工具标识符。 */
+    public boolean addTool(int groupIndex, String identifier) {
+        return addEntry(groupIndex, identifier, false);
+    }
+
+    /** 从指定组移除方块标识符。 */
+    public boolean removeBlock(int groupIndex, String identifier) {
+        return removeEntry(groupIndex, identifier, true);
+    }
+
+    /** 从指定组移除工具标识符。 */
+    public boolean removeTool(int groupIndex, String identifier) {
+        return removeEntry(groupIndex, identifier, false);
+    }
+
     /**
      * 从磁盘读取配置；首次启动时创建 Veinminer 兼容的默认文件。
      */
@@ -93,6 +139,29 @@ public final class VeinMiningConfigManager {
         } catch (Exception exception) {
             logger.error("Failed to save FastMine vein mining configuration.", exception);
         }
+    }
+
+    private boolean addEntry(int groupIndex, String identifier, boolean blocks) {
+        if (!isValidGroupIndex(groupIndex) || identifier == null || identifier.isBlank()) {
+            return false;
+        }
+        Set<String> entries = blocks ? groups.get(groupIndex).blocks : groups.get(groupIndex).tools;
+        if (entries.size() >= MAX_ENTRIES_PER_GROUP) {
+            return false;
+        }
+        return entries.add(identifier);
+    }
+
+    private boolean removeEntry(int groupIndex, String identifier, boolean blocks) {
+        if (!isValidGroupIndex(groupIndex) || identifier == null) {
+            return false;
+        }
+        Set<String> entries = blocks ? groups.get(groupIndex).blocks : groups.get(groupIndex).tools;
+        return entries.remove(identifier);
+    }
+
+    private boolean isValidGroupIndex(int groupIndex) {
+        return groupIndex >= 0 && groupIndex < groups.size();
     }
 
     private void normalize() {

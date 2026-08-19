@@ -3,7 +3,9 @@ package com.timhxl.fastmine.client;
 import com.timhxl.fastmine.network.FastMineSettingsSyncPayload;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 
 /**
@@ -17,6 +19,9 @@ public final class FastMineSettingsScreen extends Screen {
     private Button depthButton;
     private Button veinSneakButton;
     private Button areaSneakButton;
+    private Button adminButton;
+    private Button maxChainSaveButton;
+    private EditBox maxChainBox;
     private long displayedRevision = Long.MIN_VALUE;
 
     public FastMineSettingsScreen() {
@@ -26,31 +31,40 @@ public final class FastMineSettingsScreen extends Screen {
     @Override
     protected void init() {
         int left = width / 2 - 100;
-        int top = height / 2 - 92;
+        int top = Math.max(24, height / 2 - 82);
 
         veinButton = addRenderableWidget(Button.builder(Component.empty(), button -> toggleVein())
                 .bounds(left, top, 200, 20)
                 .build());
         areaButton = addRenderableWidget(Button.builder(Component.empty(), button -> toggleArea())
-                .bounds(left, top + 26, 200, 20)
+                .bounds(left, top + 28, 200, 20)
                 .build());
         widthButton = addRenderableWidget(Button.builder(Component.empty(), button -> changeWidth())
-                .bounds(left, top + 62, 64, 20)
+                .bounds(left, top + 68, 64, 20)
                 .build());
         heightButton = addRenderableWidget(Button.builder(Component.empty(), button -> changeHeight())
-                .bounds(left + 68, top + 62, 64, 20)
+                .bounds(left + 68, top + 68, 64, 20)
                 .build());
         depthButton = addRenderableWidget(Button.builder(Component.empty(), button -> changeDepth())
-                .bounds(left + 136, top + 62, 64, 20)
+                .bounds(left + 136, top + 68, 64, 20)
                 .build());
         veinSneakButton = addRenderableWidget(Button.builder(Component.empty(), button -> toggleVeinSneak())
-                .bounds(left, top + 106, 200, 20)
+                .bounds(left, top + 76, 200, 20)
                 .build());
         areaSneakButton = addRenderableWidget(Button.builder(Component.empty(), button -> toggleAreaSneak())
-                .bounds(left, top + 132, 200, 20)
+                .bounds(left, top + 100, 200, 20)
+                .build());
+        maxChainBox = addRenderableWidget(new EditBox(font, left + 94, top + 126, 48, 20,
+                Component.translatable("screen.fastmine.admin.max_chain")));
+        maxChainBox.setMaxLength(5);
+        maxChainSaveButton = addRenderableWidget(Button.builder(Component.translatable("screen.fastmine.admin.save"), button -> saveMaxChain())
+                .bounds(left + 146, top + 126, 54, 20).build());
+        adminButton = addRenderableWidget(Button.builder(Component.translatable("screen.fastmine.admin.open"),
+                        button -> openAdminScreen())
+                .bounds(left, top + 104, 200, 20)
                 .build());
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> onClose())
-                .bounds(left + 50, top + 164, 100, 20)
+                .bounds(left + 50, height - 28, 100, 20)
                 .build());
 
         refreshWidgets();
@@ -66,24 +80,28 @@ public final class FastMineSettingsScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
-        graphics.centeredText(font, title, width / 2, height / 2 - 119, 0xFFFFFF);
+        int top = Math.max(24, height / 2 - 82);
+        graphics.centeredText(font, title, width / 2, top - 22, 0xFFFFFFFF);
 
         if (FastMineClientSettings.getSnapshot() == null) {
-            graphics.centeredText(font, Component.translatable("screen.fastmine.loading"), width / 2, height / 2 - 69,
-                    0xAAAAAA);
+            graphics.centeredText(font, Component.translatable("screen.fastmine.loading"), width / 2, top + 46,
+                    0xFFAAAAAA);
         } else {
-            graphics.centeredText(font, Component.translatable("screen.fastmine.area_size"), width / 2, height / 2 - 42,
-                    0xAAAAAA);
-            if (FastMineClientSettings.getSnapshot().canManageServerSettings()) {
-                graphics.centeredText(font, Component.translatable("screen.fastmine.admin_settings"), width / 2,
-                        height / 2 + 2, 0xAAAAAA);
-            }
+            graphics.centeredText(font, Component.translatable("screen.fastmine.area_size"), width / 2, top + 54,
+                    0xFFAAAAAA);
         }
     }
 
     @Override
     public void onClose() {
+        FastMineListEditHistory.clear();
         minecraft.gui.setScreen(null);
+    }
+
+    @Override
+    public boolean keyPressed(KeyEvent event) {
+        if (FastMineListEditHistory.handleUndoKey(event)) return true;
+        return super.keyPressed(event);
     }
 
     private void refreshWidgets() {
@@ -97,10 +115,16 @@ public final class FastMineSettingsScreen extends Screen {
         widthButton.active = available;
         heightButton.active = available;
         depthButton.active = available;
-        veinSneakButton.visible = canManageServerSettings;
-        areaSneakButton.visible = canManageServerSettings;
-        veinSneakButton.active = canManageServerSettings;
-        areaSneakButton.active = canManageServerSettings;
+        veinSneakButton.visible = false;
+        areaSneakButton.visible = false;
+        veinSneakButton.active = false;
+        areaSneakButton.active = false;
+        adminButton.visible = canManageServerSettings;
+        adminButton.active = canManageServerSettings;
+        maxChainBox.visible = false;
+        maxChainBox.active = false;
+        maxChainSaveButton.visible = false;
+        maxChainSaveButton.active = false;
 
         if (!available) {
             veinButton.setMessage(Component.translatable("screen.fastmine.waiting"));
@@ -110,6 +134,8 @@ public final class FastMineSettingsScreen extends Screen {
             depthButton.setMessage(Component.empty());
             veinSneakButton.setMessage(Component.empty());
             areaSneakButton.setMessage(Component.empty());
+            adminButton.setMessage(Component.empty());
+            maxChainBox.setValue("");
             return;
         }
 
@@ -120,6 +146,7 @@ public final class FastMineSettingsScreen extends Screen {
         depthButton.setMessage(Component.translatable("screen.fastmine.depth", settings.areaDepth()));
         veinSneakButton.setMessage(Component.translatable("screen.fastmine.vein_sneak", state(settings.veinMustSneak())));
         areaSneakButton.setMessage(Component.translatable("screen.fastmine.area_sneak", state(settings.areaMustSneak())));
+        if (!maxChainBox.isFocused()) maxChainBox.setValue(String.valueOf(settings.maxChain()));
     }
 
     private Component state(boolean enabled) {
@@ -145,7 +172,7 @@ public final class FastMineSettingsScreen extends Screen {
     private void changeWidth() {
         FastMineSettingsSyncPayload settings = FastMineClientSettings.getSnapshot();
         if (settings != null) {
-            submit(settings.veinEnabled(), settings.areaEnabled(), nextOdd(settings.areaWidth(), settings.maxAreaWidth()),
+            submit(settings.veinEnabled(), settings.areaEnabled(), nextOdd(settings.areaWidth(), settings.minAreaWidth(), settings.maxAreaWidth()),
                     settings.areaHeight(), settings.areaDepth());
         }
     }
@@ -154,7 +181,7 @@ public final class FastMineSettingsScreen extends Screen {
         FastMineSettingsSyncPayload settings = FastMineClientSettings.getSnapshot();
         if (settings != null) {
             submit(settings.veinEnabled(), settings.areaEnabled(), settings.areaWidth(),
-                    nextOdd(settings.areaHeight(), settings.maxAreaHeight()), settings.areaDepth());
+                    nextOdd(settings.areaHeight(), settings.minAreaHeight(), settings.maxAreaHeight()), settings.areaDepth());
         }
     }
 
@@ -162,7 +189,7 @@ public final class FastMineSettingsScreen extends Screen {
         FastMineSettingsSyncPayload settings = FastMineClientSettings.getSnapshot();
         if (settings != null) {
             submit(settings.veinEnabled(), settings.areaEnabled(), settings.areaWidth(), settings.areaHeight(),
-                    nextOdd(settings.areaDepth(), settings.maxAreaDepth()));
+                    nextValue(settings.areaDepth(), settings.minAreaDepth(), settings.maxAreaDepth()));
         }
     }
 
@@ -171,21 +198,37 @@ public final class FastMineSettingsScreen extends Screen {
     }
 
     private void toggleVeinSneak() {
-        FastMineSettingsSyncPayload settings = FastMineClientSettings.getSnapshot();
-        if (settings != null && settings.canManageServerSettings()) {
-            FastMineClientNetworking.updateGlobalSettings(!settings.veinMustSneak(), settings.areaMustSneak());
-        }
+        openAdminScreen();
     }
 
     private void toggleAreaSneak() {
-        FastMineSettingsSyncPayload settings = FastMineClientSettings.getSnapshot();
-        if (settings != null && settings.canManageServerSettings()) {
-            FastMineClientNetworking.updateGlobalSettings(settings.veinMustSneak(), !settings.areaMustSneak());
+        openAdminScreen();
+    }
+
+    private void openAdminScreen() {
+        FastMineClientNetworking.requestAdminConfig();
+        minecraft.gui.setScreen(new FastMineGlobalConfigScreen(this));
+    }
+
+    private void saveMaxChain() {
+        openAdminScreen();
+    }
+
+    private int parseMaxChain() {
+        try {
+            return Integer.parseInt(maxChainBox.getValue());
+        } catch (NumberFormatException exception) {
+            return 0;
         }
     }
 
-    private static int nextOdd(int current, int maximum) {
+    private static int nextOdd(int current, int minimum, int maximum) {
         int next = current + 2;
-        return next <= maximum ? next : 1;
+        return next <= maximum ? next : minimum;
+    }
+
+    private static int nextValue(int current, int minimum, int maximum) {
+        int next = current + 1;
+        return next <= maximum ? next : minimum;
     }
 }

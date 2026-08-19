@@ -4,6 +4,7 @@ import com.timhxl.fastmine.FastMineMod;
 import com.timhxl.fastmine.config.FastMineConfig;
 import com.timhxl.fastmine.mining.MiningContext;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
@@ -35,7 +36,7 @@ public final class NaturalStoneFilter {
         for (BlockPos position : candidates) {
             BlockState state = context.level().getBlockState(position);
 
-            if (state.is(naturalStoneTag)) {
+            if (isAllowed(state, context.config())) {
                 allowedPositions.add(position.immutable());
             }
         }
@@ -47,7 +48,9 @@ public final class NaturalStoneFilter {
      * 判断一个方块状态是否属于当前配置指定的天然石材 Tag。
      */
     public static boolean isAllowed(BlockState state, FastMineConfig config) {
-        return state.is(resolveTag(config));
+        if (state.is(resolveTag(config))) return true;
+        Identifier identifier = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        return identifier != null && config.naturalStoneBlocks.contains(identifier.toString());
     }
 
     private static TagKey<Block> resolveTag(FastMineConfig config) {

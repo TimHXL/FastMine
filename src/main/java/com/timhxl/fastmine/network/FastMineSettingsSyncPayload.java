@@ -12,8 +12,10 @@ import net.minecraft.resources.Identifier;
  * 服务端返回的玩家真实设置及可选范围上限。
  */
 public record FastMineSettingsSyncPayload(boolean veinEnabled, boolean areaEnabled, int areaWidth, int areaHeight,
-                                          int areaDepth, int maxAreaWidth, int maxAreaHeight, int maxAreaDepth,
-                                          boolean canManageServerSettings, boolean veinMustSneak, boolean areaMustSneak)
+                                          int areaDepth, int minAreaWidth, int minAreaHeight, int minAreaDepth,
+                                          int maxAreaWidth, int maxAreaHeight, int maxAreaDepth,
+                                          boolean canManageServerSettings, boolean veinMustSneak, boolean areaMustSneak,
+                                          int maxChain)
         implements CustomPacketPayload {
     public static final Type<FastMineSettingsSyncPayload> TYPE = new Type<>(
             Identifier.fromNamespaceAndPath(FastMineMod.MOD_ID, "settings_sync")
@@ -32,9 +34,13 @@ public record FastMineSettingsSyncPayload(boolean veinEnabled, boolean areaEnabl
                             buffer.readInt(),
                             buffer.readInt(),
                             buffer.readInt(),
+                            buffer.readInt(),
+                            buffer.readInt(),
+                            buffer.readInt(),
                             buffer.readBoolean(),
                             buffer.readBoolean(),
-                            buffer.readBoolean()
+                            buffer.readBoolean(),
+                            buffer.readInt()
                     );
                 }
 
@@ -45,29 +51,37 @@ public record FastMineSettingsSyncPayload(boolean veinEnabled, boolean areaEnabl
                     buffer.writeInt(payload.areaWidth());
                     buffer.writeInt(payload.areaHeight());
                     buffer.writeInt(payload.areaDepth());
+                    buffer.writeInt(payload.minAreaWidth());
+                    buffer.writeInt(payload.minAreaHeight());
+                    buffer.writeInt(payload.minAreaDepth());
                     buffer.writeInt(payload.maxAreaWidth());
                     buffer.writeInt(payload.maxAreaHeight());
                     buffer.writeInt(payload.maxAreaDepth());
                     buffer.writeBoolean(payload.canManageServerSettings());
                     buffer.writeBoolean(payload.veinMustSneak());
                     buffer.writeBoolean(payload.areaMustSneak());
+                    buffer.writeInt(payload.maxChain());
                 }
             };
 
     public static FastMineSettingsSyncPayload from(PlayerFastMineSettings settings, FastMineConfig config,
-                                                   boolean canManageServerSettings, boolean veinMustSneak) {
+                                                   boolean canManageServerSettings, boolean veinMustSneak, int maxChain) {
         return new FastMineSettingsSyncPayload(
                 settings.veinEnabled(),
                 settings.areaEnabled(),
                 settings.areaWidth(),
                 settings.areaHeight(),
                 settings.areaDepth(),
+                config.minAreaWidth,
+                config.minAreaHeight,
+                config.minAreaDepth,
                 config.maxAreaWidth,
                 config.maxAreaHeight,
                 config.maxAreaDepth,
                 canManageServerSettings,
                 veinMustSneak,
-                config.areaMustSneak
+                config.areaMustSneak,
+                maxChain
         );
     }
 

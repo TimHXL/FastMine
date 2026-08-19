@@ -55,6 +55,9 @@ public final class AreaMiningExecutor {
             if (!NaturalStoneFilter.isAllowed(currentState, context.config())) {
                 continue;
             }
+            if (StructureProtectionFilter.isProtected(context.level(), position, context.config())) {
+                continue;
+            }
 
             player.gameMode.destroyBlock(position);
         }

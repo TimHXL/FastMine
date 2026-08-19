@@ -15,7 +15,11 @@ public final class FastMineClient implements ClientModInitializer {
         FastMineClientNetworking.register();
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> FastMineClientNetworking.requestSettings());
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> FastMineClientSettings.clear());
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            FastMineClientSettings.clear();
+            FastMineClientAdminConfig.clear();
+            FastMineListEditHistory.clear();
+        });
         ClientTickEvents.END_CLIENT_TICK.register(FastMineClient::handleKeyBindings);
     }
 

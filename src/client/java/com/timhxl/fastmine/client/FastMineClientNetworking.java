@@ -4,6 +4,9 @@ import com.timhxl.fastmine.network.FastMineSettingsRequestPayload;
 import com.timhxl.fastmine.network.FastMineSettingsSyncPayload;
 import com.timhxl.fastmine.network.FastMineSettingsUpdatePayload;
 import com.timhxl.fastmine.network.FastMineGlobalSettingsUpdatePayload;
+import com.timhxl.fastmine.network.FastMineAdminConfigRequestPayload;
+import com.timhxl.fastmine.network.FastMineAdminConfigSyncPayload;
+import com.timhxl.fastmine.network.FastMineAdminConfigUpdatePayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 
 /**
@@ -19,6 +22,8 @@ public final class FastMineClientNetworking {
     public static void register() {
         ClientPlayNetworking.registerGlobalReceiver(FastMineSettingsSyncPayload.TYPE,
                 (payload, context) -> FastMineClientSettings.setSnapshot(payload));
+        ClientPlayNetworking.registerGlobalReceiver(FastMineAdminConfigSyncPayload.TYPE,
+                (payload, context) -> FastMineClientAdminConfig.setSnapshot(payload));
     }
 
     /**
@@ -49,9 +54,32 @@ public final class FastMineClientNetworking {
     /**
      * 提交 OP 管理的服务器全局蹲下触发规则。
      */
-    public static void updateGlobalSettings(boolean veinMustSneak, boolean areaMustSneak) {
+    public static void updateGlobalSettings(boolean veinMustSneak, boolean areaMustSneak, int maxChain,
+                                            int minAreaWidth, int minAreaHeight, int minAreaDepth,
+                                            int maxAreaWidth, int maxAreaHeight, int maxAreaDepth,
+                                            int defaultAreaWidth, int defaultAreaHeight, int defaultAreaDepth,
+                                            boolean verticalMiningEnabled, int verticalMiningDepth,
+                                            boolean structureProtectionEnabled) {
         if (ClientPlayNetworking.canSend(FastMineGlobalSettingsUpdatePayload.TYPE)) {
-            ClientPlayNetworking.send(new FastMineGlobalSettingsUpdatePayload(veinMustSneak, areaMustSneak));
+            ClientPlayNetworking.send(new FastMineGlobalSettingsUpdatePayload(
+                    veinMustSneak, areaMustSneak, maxChain, minAreaWidth, minAreaHeight, minAreaDepth,
+                    maxAreaWidth, maxAreaHeight, maxAreaDepth, defaultAreaWidth, defaultAreaHeight, defaultAreaDepth,
+                    verticalMiningEnabled, verticalMiningDepth, structureProtectionEnabled
+            ));
+        }
+    }
+
+    /** 请求 OP 管理界面所需的服务器 groups.json 快照。 */
+    public static void requestAdminConfig() {
+        if (ClientPlayNetworking.canSend(FastMineAdminConfigRequestPayload.TYPE)) {
+            ClientPlayNetworking.send(new FastMineAdminConfigRequestPayload());
+        }
+    }
+
+    /** 向服务器提交管理员界面中的单次组编辑操作。 */
+    public static void updateAdminConfig(FastMineAdminConfigUpdatePayload.Operation operation, int groupIndex, String value) {
+        if (ClientPlayNetworking.canSend(FastMineAdminConfigUpdatePayload.TYPE)) {
+            ClientPlayNetworking.send(new FastMineAdminConfigUpdatePayload(operation, groupIndex, value));
         }
     }
 }

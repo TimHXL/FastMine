@@ -73,9 +73,9 @@ public final class PlayerSettingsService {
                                                                  int areaWidth, int areaHeight, int areaDepth) {
         FastMineConfig config = configManager.getConfig();
 
-        if (!isValidOddSize(areaWidth, config.maxAreaWidth)
-                || !isValidOddSize(areaHeight, config.maxAreaHeight)
-                || !isValidOddSize(areaDepth, config.maxAreaDepth)) {
+        if (!isValidOddSize(areaWidth, config.minAreaWidth, config.maxAreaWidth)
+                || !isValidOddSize(areaHeight, config.minAreaHeight, config.maxAreaHeight)
+                || !isValidDepth(areaDepth, config.minAreaDepth, config.maxAreaDepth)) {
             throw new IllegalArgumentException("Invalid FastMine area size from client.");
         }
 
@@ -93,8 +93,12 @@ public final class PlayerSettingsService {
     /**
      * 判断范围尺寸是否为服务器允许的正奇数。
      */
-    private static boolean isValidOddSize(int value, int maximum) {
-        return value > 0 && value <= maximum && value % 2 != 0;
+    private static boolean isValidOddSize(int value, int minimum, int maximum) {
+        return value >= minimum && value <= maximum && value % 2 != 0;
+    }
+
+    private static boolean isValidDepth(int value, int minimum, int maximum) {
+        return value >= minimum && value <= maximum;
     }
 
     /**

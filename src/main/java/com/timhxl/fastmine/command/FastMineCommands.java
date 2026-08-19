@@ -175,7 +175,7 @@ public final class FastMineCommands {
     /**
      * 修改执行命令的玩家自己的范围挖矿尺寸。
      *
-     * <p>尺寸必须为正奇数，才能保证原始被破坏的方块始终位于范围中心。</p>
+     * <p>宽度和高度必须为奇数，保证锚点位于平面中心；深度从锚点单向延伸，可为偶数。</p>
      */
     private static int executeSetAreaSize(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = getRequiredPlayer(context);
@@ -189,12 +189,13 @@ public final class FastMineCommands {
         int depth = IntegerArgumentType.getInteger(context, "depth");
         FastMineConfig config = FastMineMod.getConfigManager().getConfig();
 
-        if (!isValidAreaSize(width, config.maxAreaWidth)
-                || !isValidAreaSize(height, config.maxAreaHeight)
-                || !isValidAreaSize(depth, config.maxAreaDepth)) {
+        if (!isValidOddAreaSize(width, config.minAreaWidth, config.maxAreaWidth)
+                || !isValidOddAreaSize(height, config.minAreaHeight, config.maxAreaHeight)
+                || !isValidDepth(depth, config.minAreaDepth, config.maxAreaDepth)) {
             context.getSource().sendFailure(Component.literal(
-                    "FastMine: area dimensions must be positive odd numbers and cannot exceed %dx%dx%d."
-                            .formatted(config.maxAreaWidth, config.maxAreaHeight, config.maxAreaDepth)
+                    "FastMine: width/height must be odd and size must be within %d-%d x %d-%d x %d-%d."
+                            .formatted(config.minAreaWidth, config.maxAreaWidth, config.minAreaHeight, config.maxAreaHeight,
+                                    config.minAreaDepth, config.maxAreaDepth)
             ));
             return 0;
         }
@@ -212,8 +213,12 @@ public final class FastMineCommands {
     /**
      * 判断单个范围尺寸是否在服务器许可范围内。
      */
-    private static boolean isValidAreaSize(int value, int maximum) {
-        return value > 0 && value <= maximum && value % 2 != 0;
+    private static boolean isValidOddAreaSize(int value, int minimum, int maximum) {
+        return value >= minimum && value <= maximum && value % 2 != 0;
+    }
+
+    private static boolean isValidDepth(int value, int minimum, int maximum) {
+        return value >= minimum && value <= maximum;
     }
 
     /**

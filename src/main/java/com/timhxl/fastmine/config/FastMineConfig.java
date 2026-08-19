@@ -1,12 +1,17 @@
 package com.timhxl.fastmine.config;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
 /**
  * FastMine 服务器全局配置。
  *
  * <p>字段使用公开形式，以便 Gson 直接读写 config.json。</p>
  */
 public final class FastMineConfig {
-    public static final int CURRENT_SCHEMA_VERSION = 2;
+    public static final int CURRENT_SCHEMA_VERSION = 3;
     public static final int HARD_MAX_AREA_WIDTH = 9;
     public static final int HARD_MAX_AREA_HEIGHT = 9;
     public static final int HARD_MAX_AREA_DEPTH = 10;
@@ -32,6 +37,15 @@ public final class FastMineConfig {
      * <p>这是服务器全局规则；默认 false 以保持已有服务器的行为不变。</p>
      */
     public boolean areaMustSneak = false;
+
+    /** 普通玩家可设置的最小范围宽度。宽度必须为奇数，确保锚点位于横向中心。 */
+    public int minAreaWidth = 1;
+
+    /** 普通玩家可设置的最小范围高度。高度必须为奇数，确保锚点位于纵向中心。 */
+    public int minAreaHeight = 1;
+
+    /** 普通玩家可设置的最小范围深度。深度从锚点单向延伸，因此允许偶数。 */
+    public int minAreaDepth = 1;
 
     /**
      * 新玩家默认范围宽度。
@@ -78,6 +92,20 @@ public final class FastMineConfig {
      */
     public String naturalStoneTag = "fastmine:natural_stones";
 
+    /** 管理员 GUI 维护的额外天然石材列表；它与数据包 Tag 共同构成允许集合。 */
+    public List<String> naturalStoneBlocks = new ArrayList<>(List.of(
+            "minecraft:stone", "minecraft:deepslate", "minecraft:granite", "minecraft:diorite",
+            "minecraft:andesite", "minecraft:tuff", "minecraft:calcite"
+    ));
+
+    /** 是否额外跳过受保护结构已保存范围内的范围挖矿候选坐标。 */
+    public boolean structureProtectionEnabled = true;
+
+    /** 需要保护的 Structure 注册表 ID。 */
+    public Set<String> protectedStructures = new LinkedHashSet<>(Set.of(
+            "minecraft:stronghold", "minecraft:ancient_city", "minecraft:mineshaft"
+    ));
+
     /**
      * 将配置文件中的非法值修正为安全范围。
      */
@@ -87,15 +115,22 @@ public final class FastMineConfig {
         maxAreaWidth = clampOdd(maxAreaWidth, HARD_MAX_AREA_WIDTH);
         maxAreaHeight = clampOdd(maxAreaHeight, HARD_MAX_AREA_HEIGHT);
         maxAreaDepth = clamp(maxAreaDepth, 1, HARD_MAX_AREA_DEPTH);
+        minAreaWidth = clampOdd(minAreaWidth, maxAreaWidth);
+        minAreaHeight = clampOdd(minAreaHeight, maxAreaHeight);
+        minAreaDepth = clamp(minAreaDepth, 1, maxAreaDepth);
 
         defaultAreaWidth = clampOdd(defaultAreaWidth, maxAreaWidth);
         defaultAreaHeight = clampOdd(defaultAreaHeight, maxAreaHeight);
-        defaultAreaDepth = clamp(defaultAreaDepth, 1, maxAreaDepth);
+        defaultAreaDepth = clamp(defaultAreaDepth, minAreaDepth, maxAreaDepth);
+        defaultAreaWidth = Math.max(minAreaWidth, defaultAreaWidth);
+        defaultAreaHeight = Math.max(minAreaHeight, defaultAreaHeight);
         verticalMiningDepth = clamp(verticalMiningDepth, 1, maxAreaDepth);
 
         if ((naturalStoneTag == null) || naturalStoneTag.isBlank()) {
             naturalStoneTag = "fastmine:natural_stones";
         }
+        naturalStoneBlocks = normalizeIdentifiers(naturalStoneBlocks);
+        protectedStructures = new LinkedHashSet<>(normalizeIdentifiers(protectedStructures));
     }
 
     private void migrateLegacyLimits() {
@@ -105,9 +140,8 @@ public final class FastMineConfig {
                 maxAreaHeight = HARD_MAX_AREA_HEIGHT;
                 maxAreaDepth = HARD_MAX_AREA_DEPTH;
             }
-
-            schemaVersion = CURRENT_SCHEMA_VERSION;
         }
+        schemaVersion = CURRENT_SCHEMA_VERSION;
     }
 
     private static int clampOdd(int value, int maximum) {
@@ -117,5 +151,15 @@ public final class FastMineConfig {
 
     private static int clamp(int value, int minimum, int maximum) {
         return Math.max(minimum, Math.min(value, maximum));
+    }
+
+    private static List<String> normalizeIdentifiers(Iterable<String> values) {
+        LinkedHashSet<String> result = new LinkedHashSet<>();
+        if (values != null) {
+            for (String value : values) {
+                if (value != null && !value.isBlank()) result.add(value.strip());
+            }
+        }
+        return new ArrayList<>(result);
     }
 }
