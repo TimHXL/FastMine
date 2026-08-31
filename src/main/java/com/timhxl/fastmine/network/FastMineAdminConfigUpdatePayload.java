@@ -20,7 +20,9 @@ public record FastMineAdminConfigUpdatePayload(Operation operation, int groupInd
         ADD_NATURAL_STONE,
         REMOVE_NATURAL_STONE,
         ADD_PROTECTED_STRUCTURE,
-        REMOVE_PROTECTED_STRUCTURE
+        REMOVE_PROTECTED_STRUCTURE,
+        ADD_TARGET_BLOCK,
+        ADD_HELD_TOOL
     }
 
     public static final Type<FastMineAdminConfigUpdatePayload> TYPE = new Type<>(

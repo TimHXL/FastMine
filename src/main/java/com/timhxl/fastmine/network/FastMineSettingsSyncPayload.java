@@ -15,7 +15,7 @@ public record FastMineSettingsSyncPayload(boolean veinEnabled, boolean areaEnabl
                                           int areaDepth, int minAreaWidth, int minAreaHeight, int minAreaDepth,
                                           int maxAreaWidth, int maxAreaHeight, int maxAreaDepth,
                                           boolean canManageServerSettings, boolean veinMustSneak, boolean areaMustSneak,
-                                          int maxChain)
+                                          int maxChain, boolean aggregateDropsAtFeet, boolean directExperience)
         implements CustomPacketPayload {
     public static final Type<FastMineSettingsSyncPayload> TYPE = new Type<>(
             Identifier.fromNamespaceAndPath(FastMineMod.MOD_ID, "settings_sync")
@@ -40,7 +40,9 @@ public record FastMineSettingsSyncPayload(boolean veinEnabled, boolean areaEnabl
                             buffer.readBoolean(),
                             buffer.readBoolean(),
                             buffer.readBoolean(),
-                            buffer.readInt()
+                            buffer.readInt(),
+                            buffer.readBoolean(),
+                            buffer.readBoolean()
                     );
                 }
 
@@ -61,6 +63,8 @@ public record FastMineSettingsSyncPayload(boolean veinEnabled, boolean areaEnabl
                     buffer.writeBoolean(payload.veinMustSneak());
                     buffer.writeBoolean(payload.areaMustSneak());
                     buffer.writeInt(payload.maxChain());
+                    buffer.writeBoolean(payload.aggregateDropsAtFeet());
+                    buffer.writeBoolean(payload.directExperience());
                 }
             };
 
@@ -81,7 +85,9 @@ public record FastMineSettingsSyncPayload(boolean veinEnabled, boolean areaEnabl
                 canManageServerSettings,
                 veinMustSneak,
                 config.areaMustSneak,
-                maxChain
+                maxChain,
+                settings.aggregateDropsAtFeet(),
+                settings.directExperience()
         );
     }
 

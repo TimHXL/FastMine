@@ -33,7 +33,7 @@ public record FastMineAdminConfigSyncPayload(List<FastMineAdminGroupSnapshot> gr
             FastMineAdminGlobalConfigSnapshot global = new FastMineAdminGlobalConfigSnapshot(
                     buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readInt(),
                     buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readBoolean(), buffer.readInt(),
-                    buffer.readBoolean(), readEntries(buffer), readEntries(buffer)
+                    buffer.readBoolean(), buffer.readBoolean(), readEntries(buffer), readEntries(buffer)
             );
             return new FastMineAdminConfigSyncPayload(List.copyOf(groups), global);
         }
@@ -59,6 +59,7 @@ public record FastMineAdminConfigSyncPayload(List<FastMineAdminGroupSnapshot> gr
             buffer.writeBoolean(global.verticalMiningEnabled());
             buffer.writeInt(global.verticalMiningDepth());
             buffer.writeBoolean(global.structureProtectionEnabled());
+            buffer.writeBoolean(global.transferExtraDropsToPlayer());
             writeEntries(buffer, global.naturalStoneBlocks());
             writeEntries(buffer, global.protectedStructures());
         }

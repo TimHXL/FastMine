@@ -10,7 +10,8 @@ import net.minecraft.resources.Identifier;
  * 客户端提交的玩家个人设置。
  */
 public record FastMineSettingsUpdatePayload(boolean veinEnabled, boolean areaEnabled, int areaWidth, int areaHeight,
-                                            int areaDepth) implements CustomPacketPayload {
+                                            int areaDepth, boolean aggregateDropsAtFeet,
+                                            boolean directExperience) implements CustomPacketPayload {
     public static final Type<FastMineSettingsUpdatePayload> TYPE = new Type<>(
             Identifier.fromNamespaceAndPath(FastMineMod.MOD_ID, "settings_update")
     );
@@ -24,7 +25,9 @@ public record FastMineSettingsUpdatePayload(boolean veinEnabled, boolean areaEna
                             buffer.readBoolean(),
                             buffer.readInt(),
                             buffer.readInt(),
-                            buffer.readInt()
+                            buffer.readInt(),
+                            buffer.readBoolean(),
+                            buffer.readBoolean()
                     );
                 }
 
@@ -35,6 +38,8 @@ public record FastMineSettingsUpdatePayload(boolean veinEnabled, boolean areaEna
                     buffer.writeInt(payload.areaWidth());
                     buffer.writeInt(payload.areaHeight());
                     buffer.writeInt(payload.areaDepth());
+                    buffer.writeBoolean(payload.aggregateDropsAtFeet());
+                    buffer.writeBoolean(payload.directExperience());
                 }
             };
 

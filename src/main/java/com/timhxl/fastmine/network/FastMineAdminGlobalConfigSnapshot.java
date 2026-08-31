@@ -9,7 +9,8 @@ public record FastMineAdminGlobalConfigSnapshot(int minAreaWidth, int minAreaHei
                                                 int maxAreaWidth, int maxAreaHeight, int maxAreaDepth,
                                                 int defaultAreaWidth, int defaultAreaHeight, int defaultAreaDepth,
                                                 boolean verticalMiningEnabled, int verticalMiningDepth,
-                                                boolean structureProtectionEnabled, List<String> naturalStoneBlocks,
+                                                boolean structureProtectionEnabled, boolean transferExtraDropsToPlayer,
+                                                List<String> naturalStoneBlocks,
                                                 List<String> protectedStructures) {
     public static FastMineAdminGlobalConfigSnapshot from(FastMineConfig config) {
         return new FastMineAdminGlobalConfigSnapshot(
@@ -17,6 +18,7 @@ public record FastMineAdminGlobalConfigSnapshot(int minAreaWidth, int minAreaHei
                 config.maxAreaWidth, config.maxAreaHeight, config.maxAreaDepth,
                 config.defaultAreaWidth, config.defaultAreaHeight, config.defaultAreaDepth,
                 config.verticalMiningEnabled, config.verticalMiningDepth, config.structureProtectionEnabled,
+                config.transferExtraDropsToPlayer,
                 List.copyOf(config.naturalStoneBlocks), List.copyOf(config.protectedStructures)
         );
     }

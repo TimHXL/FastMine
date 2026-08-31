@@ -14,7 +14,7 @@ public record FastMineGlobalSettingsUpdatePayload(boolean veinMustSneak, boolean
                                                   int maxAreaWidth, int maxAreaHeight, int maxAreaDepth,
                                                   int defaultAreaWidth, int defaultAreaHeight, int defaultAreaDepth,
                                                   boolean verticalMiningEnabled, int verticalMiningDepth,
-                                                  boolean structureProtectionEnabled)
+                                                  boolean structureProtectionEnabled, boolean transferExtraDropsToPlayer)
         implements CustomPacketPayload {
     public static final Type<FastMineGlobalSettingsUpdatePayload> TYPE = new Type<>(
             Identifier.fromNamespaceAndPath(FastMineMod.MOD_ID, "global_settings_update")
@@ -27,7 +27,8 @@ public record FastMineGlobalSettingsUpdatePayload(boolean veinMustSneak, boolean
                     return new FastMineGlobalSettingsUpdatePayload(
                             buffer.readBoolean(), buffer.readBoolean(), buffer.readInt(),
                             buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readInt(),
-                            buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readBoolean(), buffer.readInt(), buffer.readBoolean()
+                            buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readBoolean(), buffer.readInt(), buffer.readBoolean(),
+                            buffer.readBoolean()
                     );
                 }
 
@@ -48,6 +49,7 @@ public record FastMineGlobalSettingsUpdatePayload(boolean veinMustSneak, boolean
                     buffer.writeBoolean(payload.verticalMiningEnabled());
                     buffer.writeInt(payload.verticalMiningDepth());
                     buffer.writeBoolean(payload.structureProtectionEnabled());
+                    buffer.writeBoolean(payload.transferExtraDropsToPlayer());
                 }
             };
 

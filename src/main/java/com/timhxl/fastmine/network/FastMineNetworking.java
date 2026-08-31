@@ -2,16 +2,31 @@ package com.timhxl.fastmine.network;
 
 import com.timhxl.fastmine.FastMineMod;
 import com.timhxl.fastmine.config.FastMineConfig;
+import com.timhxl.fastmine.mining.MiningContext;
+import com.timhxl.fastmine.mining.area.AreaMiningPlanner;
+import com.timhxl.fastmine.mining.area.NaturalStoneFilter;
+import com.timhxl.fastmine.mining.area.StructureProtectionFilter;
 import com.timhxl.fastmine.player.PlayerFastMineSettings;
+import com.timhxl.fastmine.vein.mining.VeinMiningTrigger;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * FastMine 玩家设置的服务端网络入口。
@@ -34,10 +49,14 @@ public final class FastMineNetworking {
                 FastMineAdminConfigRequestPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(FastMineAdminConfigUpdatePayload.TYPE,
                 FastMineAdminConfigUpdatePayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(FastMineMiningPreviewRequestPayload.TYPE,
+                FastMineMiningPreviewRequestPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(FastMineSettingsSyncPayload.TYPE,
                 FastMineSettingsSyncPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(FastMineAdminConfigSyncPayload.TYPE,
                 FastMineAdminConfigSyncPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(FastMineMiningPreviewSyncPayload.TYPE,
+                FastMineMiningPreviewSyncPayload.CODEC);
 
         ServerPlayNetworking.registerGlobalReceiver(FastMineSettingsRequestPayload.TYPE,
                 (payload, context) -> sendSettings(context.player()));
@@ -49,6 +68,61 @@ public final class FastMineNetworking {
                 (payload, context) -> sendAdminConfig(context.player()));
         ServerPlayNetworking.registerGlobalReceiver(FastMineAdminConfigUpdatePayload.TYPE,
                 (payload, context) -> updateAdminConfig(context.player(), context.server(), payload));
+        ServerPlayNetworking.registerGlobalReceiver(FastMineMiningPreviewRequestPayload.TYPE,
+                (payload, context) -> sendMiningPreview(context.player(), payload));
+    }
+
+    /**
+     * 按服务端当前方块、玩家设置、连锁组、天然石材和结构保护规则计算预览。
+     * 客户端只提交准星目标，绝不自行决定哪些方块可被破坏。
+     */
+    private static void sendMiningPreview(ServerPlayer player, FastMineMiningPreviewRequestPayload payload) {
+        BlockPos origin = payload.origin();
+        ServerLevel level = (ServerLevel) player.level();
+        if (!player.isAlive() || player.distanceToSqr(Vec3.atCenterOf(origin)) > 64.0D
+                || !level.hasChunkAt(origin)) {
+            sendMiningPreview(player, payload.requestId(), List.of());
+            return;
+        }
+
+        FastMineConfig config = FastMineMod.getConfigManager().getConfig();
+        PlayerFastMineSettings settings = FastMineMod.getPlayerSettingsService().getOrCreate(player.getUUID());
+        var state = level.getBlockState(origin);
+        if (state.isAir() || (!settings.areaEnabled() && !settings.veinEnabled())) {
+            sendMiningPreview(player, payload.requestId(), List.of());
+            return;
+        }
+
+        MiningContext context = new MiningContext(level, player, origin.immutable(), state, settings, config);
+        var veinPlan = VeinMiningTrigger.plan(context, payload.crouching());
+        if (veinPlan.isPresent()) {
+            List<BlockPos> positions = new ArrayList<>(veinPlan.get().candidates().size() + 1);
+            positions.add(origin.immutable());
+            positions.addAll(veinPlan.get().candidates());
+            sendMiningPreview(player, payload.requestId(), positions);
+            return;
+        }
+
+        Direction miningDirection = payload.hitFace().getOpposite();
+        if (!settings.areaEnabled() || (config.areaMustSneak && !payload.crouching())
+                || !player.getMainHandItem().is(ItemTags.PICKAXES)
+                || !NaturalStoneFilter.isAllowed(state, config)) {
+            sendMiningPreview(player, payload.requestId(), List.of());
+            return;
+        }
+
+        List<BlockPos> allowed = new ArrayList<>();
+        for (BlockPos position : NaturalStoneFilter.filterAllowedPositions(
+                context, AreaMiningPlanner.calculateCandidates(context, miningDirection))) {
+            if (position.equals(origin) || !StructureProtectionFilter.isProtected(level, position, config)) {
+                allowed.add(position);
+            }
+        }
+        sendMiningPreview(player, payload.requestId(), allowed);
+    }
+
+    private static void sendMiningPreview(ServerPlayer player, int requestId, List<BlockPos> positions) {
+        ServerPlayNetworking.send(player, new FastMineMiningPreviewSyncPayload(requestId, List.copyOf(positions)));
     }
 
     /**
@@ -76,7 +150,9 @@ public final class FastMineNetworking {
                     payload.areaEnabled(),
                     payload.areaWidth(),
                     payload.areaHeight(),
-                    payload.areaDepth()
+                    payload.areaDepth(),
+                    payload.aggregateDropsAtFeet(),
+                    payload.directExperience()
             );
         } catch (IllegalArgumentException exception) {
             FastMineMod.LOGGER.warn("Rejected invalid FastMine settings: {}", exception.getMessage());
@@ -113,6 +189,7 @@ public final class FastMineNetworking {
         config.verticalMiningEnabled = payload.verticalMiningEnabled();
         config.verticalMiningDepth = payload.verticalMiningDepth();
         config.structureProtectionEnabled = payload.structureProtectionEnabled();
+        config.transferExtraDropsToPlayer = payload.transferExtraDropsToPlayer();
         config.normalize();
         FastMineMod.getConfigManager().save();
         FastMineMod.getVeinMiningRuleRegistry().reload(server);
@@ -157,6 +234,8 @@ public final class FastMineNetworking {
                     && FastMineMod.getVeinMiningConfigManager().addTool(payload.groupIndex(), payload.value());
             case REMOVE_BLOCK -> FastMineMod.getVeinMiningConfigManager().removeBlock(payload.groupIndex(), payload.value());
             case REMOVE_TOOL -> FastMineMod.getVeinMiningConfigManager().removeTool(payload.groupIndex(), payload.value());
+            case ADD_TARGET_BLOCK -> addTargetBlock(player, payload.groupIndex());
+            case ADD_HELD_TOOL -> addHeldTool(player, payload.groupIndex());
             case ADD_NATURAL_STONE -> addNaturalStone(payload.value());
             case REMOVE_NATURAL_STONE -> FastMineMod.getConfigManager().getConfig().naturalStoneBlocks.remove(payload.value());
             case ADD_PROTECTED_STRUCTURE -> addProtectedStructure(server, payload.value());
@@ -183,6 +262,36 @@ public final class FastMineNetworking {
     private static boolean isKnownItem(String value) {
         Identifier identifier = Identifier.tryParse(value);
         return identifier != null && BuiltInRegistries.ITEM.containsKey(identifier);
+    }
+
+    /**
+     * 由服务器自身射线检测管理员当前准星方块，客户端不能指定任意方块 ID。
+     */
+    private static boolean addTargetBlock(ServerPlayer player, int groupIndex) {
+        ServerLevel level = (ServerLevel) player.level();
+        Vec3 eyePosition = player.getEyePosition();
+        Vec3 endPosition = eyePosition.add(player.getLookAngle().scale(6.0D));
+        BlockHitResult hitResult = level.clip(new ClipContext(eyePosition, endPosition,
+                ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
+        if (hitResult.getType() != HitResult.Type.BLOCK) {
+            return false;
+        }
+
+        Identifier identifier = BuiltInRegistries.BLOCK.getKey(level.getBlockState(hitResult.getBlockPos()).getBlock());
+        return identifier != null && FastMineMod.getVeinMiningConfigManager().addBlock(groupIndex, identifier.toString());
+    }
+
+    /**
+     * 由服务器自身读取管理员主手物品，客户端不能指定任意工具 ID。
+     */
+    private static boolean addHeldTool(ServerPlayer player, int groupIndex) {
+        ItemStack heldItem = player.getMainHandItem();
+        if (heldItem.isEmpty()) {
+            return false;
+        }
+
+        Identifier identifier = BuiltInRegistries.ITEM.getKey(heldItem.getItem());
+        return identifier != null && FastMineMod.getVeinMiningConfigManager().addTool(groupIndex, identifier.toString());
     }
 
     private static boolean addNaturalStone(String value) {
