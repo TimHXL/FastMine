@@ -27,6 +27,7 @@ public final class FastMineCommands {
                 Commands.literal("fastmine")
                         .executes(FastMineCommands::executeStatus)
                         .then(Commands.literal("status").executes(FastMineCommands::executeStatus))
+                        .then(Commands.literal("help").executes(FastMineCommands::executeHelp))
                         .then(Commands.literal("reload")
                                 .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                                 .executes(FastMineCommands::executeReload))
@@ -38,6 +39,12 @@ public final class FastMineCommands {
                                         .executes(FastMineCommands::executeVeinSneakStatus)
                                         .then(Commands.literal("on").executes(context -> executeSetVeinMustSneak(context, true)))
                                         .then(Commands.literal("off").executes(context -> executeSetVeinMustSneak(context, false)))))
+                        .then(Commands.literal("drops")
+                                .then(Commands.literal("on").executes(context -> executeSetAggregateDrops(context, true)))
+                                .then(Commands.literal("off").executes(context -> executeSetAggregateDrops(context, false))))
+                        .then(Commands.literal("experience")
+                                .then(Commands.literal("on").executes(context -> executeSetDirectExperience(context, true)))
+                                .then(Commands.literal("off").executes(context -> executeSetDirectExperience(context, false))))
                         .then(Commands.literal("area")
                                 .then(Commands.literal("on").executes(context -> executeSetArea(context, true)))
                                 .then(Commands.literal("off").executes(context -> executeSetArea(context, false)))
@@ -52,6 +59,26 @@ public final class FastMineCommands {
                                                         .then(Commands.argument("depth", IntegerArgumentType.integer(1))
                                                                 .executes(FastMineCommands::executeSetAreaSize))))))
         ));
+    }
+
+    /**
+     * 输出 FastMine 中文命令帮助。
+     */
+    private static int executeHelp(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        source.sendSuccess(() -> Component.literal("§6=== FastMine 命令帮助 ==="), false);
+        source.sendSuccess(() -> Component.literal("§e/fastmine§r 或 §e/fastmine status§r：查看自己的当前设置。"), false);
+        source.sendSuccess(() -> Component.literal("§e/fastmine vein on|off§r：开启或关闭自己的连锁采集。"), false);
+        source.sendSuccess(() -> Component.literal("§e/fastmine area on|off§r：开启或关闭自己的范围挖掘。"), false);
+        source.sendSuccess(() -> Component.literal("§e/fastmine drops on|off§r：开启或关闭本次快速挖矿掉落物聚合到脚下。"), false);
+        source.sendSuccess(() -> Component.literal("§e/fastmine experience on|off§r：开启或关闭额外经验直接获得。"), false);
+        source.sendSuccess(() -> Component.literal("§e/fastmine area size <宽> <高> <深>"), false);
+        source.sendSuccess(() -> Component.literal("  §7设置范围尺寸：宽、高必须为奇数；深度可为偶数。"), false);
+        source.sendSuccess(() -> Component.literal("§c管理员命令："), false);
+        source.sendSuccess(() -> Component.literal("§e/fastmine reload§r：重新加载服务器配置与连锁采集规则。"), false);
+        source.sendSuccess(() -> Component.literal("§e/fastmine vein sneak [on|off]§r：查看或设置连锁采集是否必须蹲下。"), false);
+        source.sendSuccess(() -> Component.literal("§e/fastmine area sneak [on|off]§r：查看或设置范围挖掘是否必须蹲下。"), false);
+        return 1;
     }
 
     /**
@@ -118,6 +145,40 @@ public final class FastMineCommands {
 
         context.getSource().sendSuccess(() -> Component.literal(
                 "FastMine: area mining is now %s.".formatted(enabled ? "ON" : "OFF")
+        ), false);
+        return 1;
+    }
+
+    /** 修改执行者自己的掉落物聚合开关。 */
+    private static int executeSetAggregateDrops(CommandContext<CommandSourceStack> context, boolean enabled)
+            throws CommandSyntaxException {
+        ServerPlayer player = getRequiredPlayer(context);
+        if (player == null) return 0;
+
+        PlayerFastMineSettings current = FastMineMod.getPlayerSettingsService().getOrCreate(player.getUUID());
+        FastMineMod.getPlayerSettingsService().update(player.getUUID(), new PlayerFastMineSettings(
+                current.veinEnabled(), current.areaEnabled(), current.areaWidth(), current.areaHeight(), current.areaDepth(),
+                enabled, current.directExperience()
+        ));
+        context.getSource().sendSuccess(() -> Component.literal(
+                "FastMine: drop aggregation at your feet is now %s.".formatted(enabled ? "ON" : "OFF")
+        ), false);
+        return 1;
+    }
+
+    /** 修改执行者自己的额外经验直接获得开关。 */
+    private static int executeSetDirectExperience(CommandContext<CommandSourceStack> context, boolean enabled)
+            throws CommandSyntaxException {
+        ServerPlayer player = getRequiredPlayer(context);
+        if (player == null) return 0;
+
+        PlayerFastMineSettings current = FastMineMod.getPlayerSettingsService().getOrCreate(player.getUUID());
+        FastMineMod.getPlayerSettingsService().update(player.getUUID(), new PlayerFastMineSettings(
+                current.veinEnabled(), current.areaEnabled(), current.areaWidth(), current.areaHeight(), current.areaDepth(),
+                current.aggregateDropsAtFeet(), enabled
+        ));
+        context.getSource().sendSuccess(() -> Component.literal(
+                "FastMine: direct experience is now %s.".formatted(enabled ? "ON" : "OFF")
         ), false);
         return 1;
     }
@@ -239,13 +300,15 @@ public final class FastMineCommands {
      * 将玩家设置格式化为状态文本。
      */
     private static String formatStatus(PlayerFastMineSettings settings) {
-        return "FastMine status: vein=%s, area=%s, area size=%dx%dx%d."
+        return "FastMine status: vein=%s, area=%s, area size=%dx%dx%d, drops=%s, experience=%s."
                 .formatted(
                         settings.veinEnabled() ? "ON" : "OFF",
                         settings.areaEnabled() ? "ON" : "OFF",
                         settings.areaWidth(),
                         settings.areaHeight(),
-                        settings.areaDepth()
+                        settings.areaDepth(),
+                        settings.aggregateDropsAtFeet() ? "ON" : "OFF",
+                        settings.directExperience() ? "ON" : "OFF"
                 );
     }
 }
