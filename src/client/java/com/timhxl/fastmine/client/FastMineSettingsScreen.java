@@ -14,6 +14,8 @@ import net.minecraft.network.chat.Component;
 public final class FastMineSettingsScreen extends Screen {
     private Button veinButton;
     private Button areaButton;
+    private Button aggregateDropsButton;
+    private Button directExperienceButton;
     private Button widthButton;
     private Button heightButton;
     private Button depthButton;
@@ -39,14 +41,20 @@ public final class FastMineSettingsScreen extends Screen {
         areaButton = addRenderableWidget(Button.builder(Component.empty(), button -> toggleArea())
                 .bounds(left, top + 28, 200, 20)
                 .build());
+        aggregateDropsButton = addRenderableWidget(Button.builder(Component.empty(), button -> toggleAggregateDrops())
+                .bounds(left, top + 56, 98, 20)
+                .build());
+        directExperienceButton = addRenderableWidget(Button.builder(Component.empty(), button -> toggleDirectExperience())
+                .bounds(left + 102, top + 56, 98, 20)
+                .build());
         widthButton = addRenderableWidget(Button.builder(Component.empty(), button -> changeWidth())
-                .bounds(left, top + 68, 64, 20)
+                .bounds(left, top + 116, 64, 20)
                 .build());
         heightButton = addRenderableWidget(Button.builder(Component.empty(), button -> changeHeight())
-                .bounds(left + 68, top + 68, 64, 20)
+                .bounds(left + 68, top + 116, 64, 20)
                 .build());
         depthButton = addRenderableWidget(Button.builder(Component.empty(), button -> changeDepth())
-                .bounds(left + 136, top + 68, 64, 20)
+                .bounds(left + 136, top + 116, 64, 20)
                 .build());
         veinSneakButton = addRenderableWidget(Button.builder(Component.empty(), button -> toggleVeinSneak())
                 .bounds(left, top + 76, 200, 20)
@@ -61,7 +69,7 @@ public final class FastMineSettingsScreen extends Screen {
                 .bounds(left + 146, top + 126, 54, 20).build());
         adminButton = addRenderableWidget(Button.builder(Component.translatable("screen.fastmine.admin.open"),
                         button -> openAdminScreen())
-                .bounds(left, top + 104, 200, 20)
+                .bounds(left, top + 148, 200, 20)
                 .build());
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> onClose())
                 .bounds(left + 50, height - 28, 100, 20)
@@ -87,7 +95,7 @@ public final class FastMineSettingsScreen extends Screen {
             graphics.centeredText(font, Component.translatable("screen.fastmine.loading"), width / 2, top + 46,
                     0xFFAAAAAA);
         } else {
-            graphics.centeredText(font, Component.translatable("screen.fastmine.area_size"), width / 2, top + 54,
+            graphics.centeredText(font, Component.translatable("screen.fastmine.area_size"), width / 2, top + 102,
                     0xFFAAAAAA);
         }
     }
@@ -112,6 +120,8 @@ public final class FastMineSettingsScreen extends Screen {
 
         veinButton.active = available;
         areaButton.active = available;
+        aggregateDropsButton.active = available;
+        directExperienceButton.active = available;
         widthButton.active = available;
         heightButton.active = available;
         depthButton.active = available;
@@ -129,6 +139,8 @@ public final class FastMineSettingsScreen extends Screen {
         if (!available) {
             veinButton.setMessage(Component.translatable("screen.fastmine.waiting"));
             areaButton.setMessage(Component.empty());
+            aggregateDropsButton.setMessage(Component.empty());
+            directExperienceButton.setMessage(Component.empty());
             widthButton.setMessage(Component.empty());
             heightButton.setMessage(Component.empty());
             depthButton.setMessage(Component.empty());
@@ -141,6 +153,10 @@ public final class FastMineSettingsScreen extends Screen {
 
         veinButton.setMessage(Component.translatable("screen.fastmine.vein", state(settings.veinEnabled())));
         areaButton.setMessage(Component.translatable("screen.fastmine.area", state(settings.areaEnabled())));
+        aggregateDropsButton.setMessage(Component.translatable("screen.fastmine.aggregate_drops",
+                shortState(settings.aggregateDropsAtFeet())));
+        directExperienceButton.setMessage(Component.translatable("screen.fastmine.direct_experience",
+                shortState(settings.directExperience())));
         widthButton.setMessage(Component.translatable("screen.fastmine.width", settings.areaWidth()));
         heightButton.setMessage(Component.translatable("screen.fastmine.height", settings.areaHeight()));
         depthButton.setMessage(Component.translatable("screen.fastmine.depth", settings.areaDepth()));
@@ -153,11 +169,15 @@ public final class FastMineSettingsScreen extends Screen {
         return Component.translatable(enabled ? "screen.fastmine.on" : "screen.fastmine.off");
     }
 
+    private Component shortState(boolean enabled) {
+        return Component.translatable(enabled ? "screen.fastmine.short_on" : "screen.fastmine.short_off");
+    }
+
     private void toggleVein() {
         FastMineSettingsSyncPayload settings = FastMineClientSettings.getSnapshot();
         if (settings != null) {
             submit(!settings.veinEnabled(), settings.areaEnabled(), settings.areaWidth(), settings.areaHeight(),
-                    settings.areaDepth());
+                    settings.areaDepth(), settings.aggregateDropsAtFeet(), settings.directExperience());
         }
     }
 
@@ -165,7 +185,7 @@ public final class FastMineSettingsScreen extends Screen {
         FastMineSettingsSyncPayload settings = FastMineClientSettings.getSnapshot();
         if (settings != null) {
             submit(settings.veinEnabled(), !settings.areaEnabled(), settings.areaWidth(), settings.areaHeight(),
-                    settings.areaDepth());
+                    settings.areaDepth(), settings.aggregateDropsAtFeet(), settings.directExperience());
         }
     }
 
@@ -173,7 +193,7 @@ public final class FastMineSettingsScreen extends Screen {
         FastMineSettingsSyncPayload settings = FastMineClientSettings.getSnapshot();
         if (settings != null) {
             submit(settings.veinEnabled(), settings.areaEnabled(), nextOdd(settings.areaWidth(), settings.minAreaWidth(), settings.maxAreaWidth()),
-                    settings.areaHeight(), settings.areaDepth());
+                    settings.areaHeight(), settings.areaDepth(), settings.aggregateDropsAtFeet(), settings.directExperience());
         }
     }
 
@@ -181,7 +201,8 @@ public final class FastMineSettingsScreen extends Screen {
         FastMineSettingsSyncPayload settings = FastMineClientSettings.getSnapshot();
         if (settings != null) {
             submit(settings.veinEnabled(), settings.areaEnabled(), settings.areaWidth(),
-                    nextOdd(settings.areaHeight(), settings.minAreaHeight(), settings.maxAreaHeight()), settings.areaDepth());
+                    nextOdd(settings.areaHeight(), settings.minAreaHeight(), settings.maxAreaHeight()), settings.areaDepth(),
+                    settings.aggregateDropsAtFeet(), settings.directExperience());
         }
     }
 
@@ -189,12 +210,31 @@ public final class FastMineSettingsScreen extends Screen {
         FastMineSettingsSyncPayload settings = FastMineClientSettings.getSnapshot();
         if (settings != null) {
             submit(settings.veinEnabled(), settings.areaEnabled(), settings.areaWidth(), settings.areaHeight(),
-                    nextValue(settings.areaDepth(), settings.minAreaDepth(), settings.maxAreaDepth()));
+                    nextValue(settings.areaDepth(), settings.minAreaDepth(), settings.maxAreaDepth()),
+                    settings.aggregateDropsAtFeet(), settings.directExperience());
         }
     }
 
-    private void submit(boolean veinEnabled, boolean areaEnabled, int areaWidth, int areaHeight, int areaDepth) {
-        FastMineClientNetworking.updateSettings(veinEnabled, areaEnabled, areaWidth, areaHeight, areaDepth);
+    private void toggleAggregateDrops() {
+        FastMineSettingsSyncPayload settings = FastMineClientSettings.getSnapshot();
+        if (settings != null) {
+            submit(settings.veinEnabled(), settings.areaEnabled(), settings.areaWidth(), settings.areaHeight(),
+                    settings.areaDepth(), !settings.aggregateDropsAtFeet(), settings.directExperience());
+        }
+    }
+
+    private void toggleDirectExperience() {
+        FastMineSettingsSyncPayload settings = FastMineClientSettings.getSnapshot();
+        if (settings != null) {
+            submit(settings.veinEnabled(), settings.areaEnabled(), settings.areaWidth(), settings.areaHeight(),
+                    settings.areaDepth(), settings.aggregateDropsAtFeet(), !settings.directExperience());
+        }
+    }
+
+    private void submit(boolean veinEnabled, boolean areaEnabled, int areaWidth, int areaHeight, int areaDepth,
+                        boolean aggregateDropsAtFeet, boolean directExperience) {
+        FastMineClientNetworking.updateSettings(veinEnabled, areaEnabled, areaWidth, areaHeight, areaDepth,
+                aggregateDropsAtFeet, directExperience);
     }
 
     private void toggleVeinSneak() {

@@ -69,6 +69,12 @@ public final class FastMineAdminScreen extends Screen {
         addRenderableWidget(Button.builder(Component.translatable("screen.fastmine.admin.pick_item"),
                         button -> openPicker(false))
                 .bounds(center + 8, 110, 142, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("screen.fastmine.admin.add_target_block"),
+                        button -> addTargetBlock())
+                .bounds(center - 150, 134, 150, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("screen.fastmine.admin.add_held_tool"),
+                        button -> addHeldTool())
+                .bounds(center + 8, 134, 142, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("gui.back"), button -> minecraft.gui.setScreen(parent))
                 .bounds(center - 50, height - 28, 100, 20).build());
         refreshWidgets();
@@ -97,10 +103,10 @@ public final class FastMineAdminScreen extends Screen {
         selectedGroupIndex = Math.min(selectedGroupIndex, snapshot.groups().size() - 1);
         FastMineAdminGroupSnapshot group = snapshot.groups().get(selectedGroupIndex);
         graphics.centeredText(font, Component.literal(group.name()), width / 2, 41, 0xFFFFFFFF);
-        graphics.text(font, Component.translatable("screen.fastmine.admin.blocks", group.blocks().size()), width / 2 - 150, 138, 0xFF55FF55);
-        drawIcons(graphics, group.blocks(), width / 2 - 150, 154, true, mouseX, mouseY);
-        graphics.text(font, Component.translatable("screen.fastmine.admin.tools", group.tools().size()), width / 2 + 8, 138, 0xFF55AAFF);
-        drawIcons(graphics, group.tools(), width / 2 + 8, 154, false, mouseX, mouseY);
+        graphics.text(font, Component.translatable("screen.fastmine.admin.blocks", group.blocks().size()), width / 2 - 150, 162, 0xFF55FF55);
+        drawIcons(graphics, group.blocks(), width / 2 - 150, 178, true, mouseX, mouseY);
+        graphics.text(font, Component.translatable("screen.fastmine.admin.tools", group.tools().size()), width / 2 + 8, 162, 0xFF55AAFF);
+        drawIcons(graphics, group.tools(), width / 2 + 8, 178, false, mouseX, mouseY);
     }
 
     @Override
@@ -183,6 +189,18 @@ public final class FastMineAdminScreen extends Screen {
         entryIdentifier.setValue("");
     }
 
+    /** 请求服务端将该管理员实际准星指向的方块加入当前组。 */
+    private void addTargetBlock() {
+        FastMineClientNetworking.updateAdminConfig(
+                FastMineAdminConfigUpdatePayload.Operation.ADD_TARGET_BLOCK, selectedGroupIndex, "");
+    }
+
+    /** 请求服务端将该管理员实际主手持有的工具加入当前组。 */
+    private void addHeldTool() {
+        FastMineClientNetworking.updateAdminConfig(
+                FastMineAdminConfigUpdatePayload.Operation.ADD_HELD_TOOL, selectedGroupIndex, "");
+    }
+
     /** 通过选择器新增条目，并记录可撤回的反向操作。 */
     private void addEntry(boolean blocks, String identifier) {
         FastMineClientNetworking.updateAdminConfig(blocks
@@ -203,7 +221,7 @@ public final class FastMineAdminScreen extends Screen {
         }
         FastMineAdminGroupSnapshot group = snapshot.groups().get(selectedGroupIndex);
         int center = width / 2;
-        String blockEntry = getEntryAt(group.blocks(), center - 150, 154, mouseX, mouseY);
+        String blockEntry = getEntryAt(group.blocks(), center - 150, 178, mouseX, mouseY);
         if (blockEntry != null) {
             FastMineClientNetworking.updateAdminConfig(FastMineAdminConfigUpdatePayload.Operation.REMOVE_BLOCK,
                     selectedGroupIndex, blockEntry);
@@ -211,7 +229,7 @@ public final class FastMineAdminScreen extends Screen {
                     selectedGroupIndex, blockEntry);
             return true;
         }
-        String toolEntry = getEntryAt(group.tools(), center + 8, 154, mouseX, mouseY);
+        String toolEntry = getEntryAt(group.tools(), center + 8, 178, mouseX, mouseY);
         if (toolEntry != null) {
             FastMineClientNetworking.updateAdminConfig(FastMineAdminConfigUpdatePayload.Operation.REMOVE_TOOL,
                     selectedGroupIndex, toolEntry);

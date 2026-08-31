@@ -6,6 +6,8 @@
   "screen.fastmine.waiting": "正在等待服务器...",
   "screen.fastmine.vein": "连锁采集：%s",
   "screen.fastmine.area": "范围挖掘：%s",
+  "screen.fastmine.aggregate_drops": "掉落物聚合：%s",
+  "screen.fastmine.direct_experience": "直接获得经验：%s",
   "screen.fastmine.area_size": "范围挖掘尺寸",
   "screen.fastmine.admin_settings": "管理员设置",
   "screen.fastmine.admin.open": "服务器全局配置",
@@ -19,6 +21,8 @@
   "screen.fastmine.admin.delete_group": "删除当前组",
   "screen.fastmine.admin.pick_block": "从全部方块选择",
   "screen.fastmine.admin.pick_item": "从全部物品选择",
+  "screen.fastmine.admin.add_target_block": "添加准星指向方块",
+  "screen.fastmine.admin.add_held_tool": "添加当前手持工具",
   "screen.fastmine.admin.click_to_remove": "点击移除",
   "screen.fastmine.admin.max_chain": "连锁最大数量",
   "screen.fastmine.admin.save": "保存",
@@ -33,5 +37,7 @@
   "screen.fastmine.vein_sneak": "连锁采集需要蹲下：%s",
   "screen.fastmine.area_sneak": "范围挖掘需要蹲下：%s",
   "screen.fastmine.on": "开启",
-  "screen.fastmine.off": "关闭"
+  "screen.fastmine.off": "关闭",
+  "screen.fastmine.short_on": "开",
+  "screen.fastmine.short_off": "关"
 }

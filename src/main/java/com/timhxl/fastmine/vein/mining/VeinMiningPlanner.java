@@ -39,9 +39,11 @@ public final class VeinMiningPlanner {
         int searchRadius = Math.clamp(settings.searchRadius, 1, 5);
         int maxChain = Math.max(1, settings.maxChain);
         Set<BlockPos> visited = new LinkedHashSet<>();
+        Set<BlockPos> queued = new LinkedHashSet<>();
         Deque<SearchNode> queue = new ArrayDeque<>();
         List<BlockPos> candidates = new ArrayList<>();
         queue.addLast(new SearchNode(origin.immutable(), 0));
+        queued.add(origin.immutable());
 
         while (!queue.isEmpty() && visited.size() < maxChain) {
             SearchNode current = queue.removeFirst();
@@ -61,7 +63,7 @@ public final class VeinMiningPlanner {
                         }
 
                         BlockPos next = current.position().offset(x, y, z).immutable();
-                        if (visited.contains(next) || !targetBlocks.contains(level.getBlockState(next).getBlock())) {
+                        if (!queued.add(next) || !targetBlocks.contains(level.getBlockState(next).getBlock())) {
                             continue;
                         }
                         queue.addLast(new SearchNode(next, current.distance() + 1));

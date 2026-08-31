@@ -1,15 +1,17 @@
 package com.timhxl.fastmine.client.mixin;
 
-import net.minecraft.client.Minecraft;
+import com.timhxl.fastmine.client.FastMinePreviewRenderer;
+import net.minecraft.client.renderer.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(Minecraft.class)
+/** 释放 FastMine 客户端预览渲染使用的显存缓冲区。 */
+@Mixin(GameRenderer.class)
 public class ExampleClientMixin {
-	@Inject(at = @At("HEAD"), method = "run")
-	private void init(CallbackInfo info) {
-		// This code is injected into the start of Minecraft.run()V
+	@Inject(at = @At("RETURN"), method = "close")
+	private void fastmine$closePreviewRenderer(CallbackInfo info) {
+		FastMinePreviewRenderer.close();
 	}
 }

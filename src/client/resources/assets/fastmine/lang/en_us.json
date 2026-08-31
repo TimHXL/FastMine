@@ -6,6 +6,8 @@
   "screen.fastmine.waiting": "Waiting for server...",
   "screen.fastmine.vein": "Vein Mining: %s",
   "screen.fastmine.area": "Area Mining: %s",
+  "screen.fastmine.aggregate_drops": "Aggregate drops: %s",
+  "screen.fastmine.direct_experience": "Direct XP: %s",
   "screen.fastmine.area_size": "Area size",
   "screen.fastmine.admin_settings": "Administrator settings",
   "screen.fastmine.admin.open": "Server global settings",
@@ -19,6 +21,8 @@
   "screen.fastmine.admin.delete_group": "Delete current group",
   "screen.fastmine.admin.pick_block": "Choose from all blocks",
   "screen.fastmine.admin.pick_item": "Choose from all items",
+  "screen.fastmine.admin.add_target_block": "Add targeted block",
+  "screen.fastmine.admin.add_held_tool": "Add held tool",
   "screen.fastmine.admin.click_to_remove": "Click to remove",
   "screen.fastmine.admin.max_chain": "Maximum chain size",
   "screen.fastmine.admin.save": "Save",
@@ -33,5 +37,7 @@
   "screen.fastmine.vein_sneak": "Vein mining requires crouching: %s",
   "screen.fastmine.area_sneak": "Area mining requires crouching: %s",
   "screen.fastmine.on": "ON",
-  "screen.fastmine.off": "OFF"
+  "screen.fastmine.off": "OFF",
+  "screen.fastmine.short_on": "ON",
+  "screen.fastmine.short_off": "OFF"
 }

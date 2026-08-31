@@ -26,6 +26,14 @@ public final class VeinMiningTrigger {
      * 根据玩家刚刚手动破坏的锚点，生成连锁采集计划；不执行破坏。
      */
     public static Optional<VeinMiningPlan> plan(MiningContext context) {
+        return plan(context, context.player().isCrouching());
+    }
+
+    /**
+     * 使用调用方提供的蹲下状态生成计划。预览请求使用客户端发送时的即时状态，
+     * 避免自定义载荷早于原版玩家状态包到达而造成一帧相反的预览结果。
+     */
+    public static Optional<VeinMiningPlan> plan(MiningContext context, boolean crouching) {
         PlayerFastMineSettings playerSettings = context.playerSettings();
         if (!playerSettings.veinEnabled()) {
             return Optional.empty();
@@ -52,7 +60,7 @@ public final class VeinMiningTrigger {
 
         VeinMiningSettings settings = FastMineMod.getVeinMiningConfigManager().getSettings()
                 .withOverride(firstOverride);
-        if (settings.mustSneak && !context.player().isCrouching()) {
+        if (settings.mustSneak && !crouching) {
             return Optional.empty();
         }
         // permissionRestricted 将在权限模块接入后由执行层统一处理。

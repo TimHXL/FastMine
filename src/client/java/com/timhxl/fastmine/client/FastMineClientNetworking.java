@@ -7,7 +7,11 @@ import com.timhxl.fastmine.network.FastMineGlobalSettingsUpdatePayload;
 import com.timhxl.fastmine.network.FastMineAdminConfigRequestPayload;
 import com.timhxl.fastmine.network.FastMineAdminConfigSyncPayload;
 import com.timhxl.fastmine.network.FastMineAdminConfigUpdatePayload;
+import com.timhxl.fastmine.network.FastMineMiningPreviewRequestPayload;
+import com.timhxl.fastmine.network.FastMineMiningPreviewSyncPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 
 /**
  * FastMine 客户端个人设置网络入口。
@@ -24,6 +28,8 @@ public final class FastMineClientNetworking {
                 (payload, context) -> FastMineClientSettings.setSnapshot(payload));
         ClientPlayNetworking.registerGlobalReceiver(FastMineAdminConfigSyncPayload.TYPE,
                 (payload, context) -> FastMineClientAdminConfig.setSnapshot(payload));
+        ClientPlayNetworking.registerGlobalReceiver(FastMineMiningPreviewSyncPayload.TYPE,
+                (payload, context) -> FastMinePreviewRenderer.acceptServerPreview(payload));
     }
 
     /**
@@ -39,14 +45,16 @@ public final class FastMineClientNetworking {
      * 向服务器提交玩家设置。服务端会校验、保存并返回权威快照。
      */
     public static void updateSettings(boolean veinEnabled, boolean areaEnabled, int areaWidth, int areaHeight,
-                                      int areaDepth) {
+                                      int areaDepth, boolean aggregateDropsAtFeet, boolean directExperience) {
         if (ClientPlayNetworking.canSend(FastMineSettingsUpdatePayload.TYPE)) {
             ClientPlayNetworking.send(new FastMineSettingsUpdatePayload(
                     veinEnabled,
                     areaEnabled,
                     areaWidth,
                     areaHeight,
-                    areaDepth
+                    areaDepth,
+                    aggregateDropsAtFeet,
+                    directExperience
             ));
         }
     }
@@ -59,12 +67,13 @@ public final class FastMineClientNetworking {
                                             int maxAreaWidth, int maxAreaHeight, int maxAreaDepth,
                                             int defaultAreaWidth, int defaultAreaHeight, int defaultAreaDepth,
                                             boolean verticalMiningEnabled, int verticalMiningDepth,
-                                            boolean structureProtectionEnabled) {
+                                            boolean structureProtectionEnabled, boolean transferExtraDropsToPlayer) {
         if (ClientPlayNetworking.canSend(FastMineGlobalSettingsUpdatePayload.TYPE)) {
             ClientPlayNetworking.send(new FastMineGlobalSettingsUpdatePayload(
                     veinMustSneak, areaMustSneak, maxChain, minAreaWidth, minAreaHeight, minAreaDepth,
                     maxAreaWidth, maxAreaHeight, maxAreaDepth, defaultAreaWidth, defaultAreaHeight, defaultAreaDepth,
-                    verticalMiningEnabled, verticalMiningDepth, structureProtectionEnabled
+                    verticalMiningEnabled, verticalMiningDepth, structureProtectionEnabled,
+                    transferExtraDropsToPlayer
             ));
         }
     }
@@ -80,6 +89,13 @@ public final class FastMineClientNetworking {
     public static void updateAdminConfig(FastMineAdminConfigUpdatePayload.Operation operation, int groupIndex, String value) {
         if (ClientPlayNetworking.canSend(FastMineAdminConfigUpdatePayload.TYPE)) {
             ClientPlayNetworking.send(new FastMineAdminConfigUpdatePayload(operation, groupIndex, value));
+        }
+    }
+
+    /** 请求服务器按真实连锁/范围规则计算当前准星目标的候选方块。 */
+    public static void requestMiningPreview(BlockPos origin, Direction hitFace, boolean crouching, int requestId) {
+        if (ClientPlayNetworking.canSend(FastMineMiningPreviewRequestPayload.TYPE)) {
+            ClientPlayNetworking.send(new FastMineMiningPreviewRequestPayload(origin, hitFace, crouching, requestId));
         }
     }
 }

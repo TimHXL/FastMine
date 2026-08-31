@@ -7,7 +7,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
 /**
- * 生成 Java 与 Geyser/Bedrock 均可识别的原版颜色连锁提示。
+ * 生成 Java 客户端可识别的原版颜色连锁提示。
  */
 public final class VeinMiningActionBar {
     private VeinMiningActionBar() {
