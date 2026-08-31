@@ -1,6 +1,8 @@
 package com.timhxl.fastmine.mining.area;
 
 import com.timhxl.fastmine.mining.MiningContext;
+import com.timhxl.fastmine.mining.MiningDropTransfer;
+import com.timhxl.fastmine.mining.MiningDropSession;
 import com.timhxl.fastmine.mining.MiningOperationGuard;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -21,6 +23,11 @@ public final class AreaMiningExecutor {
      * 使用玩家原版游戏模式依次破坏允许的候选方块。
      */
     public static void execute(MiningContext context, Direction miningDirection) {
+        execute(context, miningDirection, null);
+    }
+
+    /** 使用给定会话处理本次操作的掉落物与经验。 */
+    public static void execute(MiningContext context, Direction miningDirection, MiningDropSession dropSession) {
         if (!context.playerSettings().areaEnabled()) {
             return;
         }
@@ -35,10 +42,11 @@ public final class AreaMiningExecutor {
 
         List<BlockPos> candidates = AreaMiningPlanner.calculateCandidates(context, miningDirection);
         List<BlockPos> allowedPositions = NaturalStoneFilter.filterAllowedPositions(context, candidates);
-        MiningOperationGuard.runProtected(() -> destroyAllowedPositions(context, allowedPositions));
+        MiningOperationGuard.runProtected(() -> destroyAllowedPositions(context, allowedPositions, dropSession));
     }
 
-    private static void destroyAllowedPositions(MiningContext context, List<BlockPos> allowedPositions) {
+    private static void destroyAllowedPositions(MiningContext context, List<BlockPos> allowedPositions,
+                                                MiningDropSession dropSession) {
         ServerPlayer player = context.player();
 
         for (BlockPos position : allowedPositions) {
@@ -59,7 +67,12 @@ public final class AreaMiningExecutor {
                 continue;
             }
 
-            player.gameMode.destroyBlock(position);
+            if (dropSession != null) {
+                dropSession.destroyBlock(position);
+            } else {
+                MiningDropTransfer.destroyBlock(player, context.level(), position,
+                        context.config().transferExtraDropsToPlayer);
+            }
         }
     }
 

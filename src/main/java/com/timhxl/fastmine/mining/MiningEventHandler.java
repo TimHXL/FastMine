@@ -17,10 +17,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * 监听玩家正常完成的方块破坏，并建立 FastMine 后续处理所需的上下文。
  */
 public final class MiningEventHandler {
+    private static final Map<UUID, InitialBreakSnapshot> INITIAL_BREAK_SNAPSHOTS = new ConcurrentHashMap<>();
+
     private MiningEventHandler() {
     }
 
@@ -29,7 +35,20 @@ public final class MiningEventHandler {
      */
     public static void register() {
         MiningDirectionTracker.register();
+        PlayerBlockBreakEvents.BEFORE.register(MiningEventHandler::beforePlayerBlockBroken);
         PlayerBlockBreakEvents.AFTER.register(MiningEventHandler::onPlayerBlockBroken);
+    }
+
+    /** 在原版生成锚点方块掉落物之前记录附近实体。 */
+    private static boolean beforePlayerBlockBroken(Level level, Player player, BlockPos position,
+                                                   BlockState state, BlockEntity blockEntity) {
+        if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer
+                && !MiningOperationGuard.isActive()) {
+            MiningDropSession snapshotSession = new MiningDropSession(serverPlayer, serverLevel, false, false);
+            INITIAL_BREAK_SNAPSHOTS.put(serverPlayer.getUUID(), new InitialBreakSnapshot(
+                    serverLevel, position.immutable(), snapshotSession.snapshot(position)));
+        }
+        return true;
     }
 
     private static void onPlayerBlockBroken(Level level, Player player, BlockPos position,
@@ -41,6 +60,8 @@ public final class MiningEventHandler {
         if (MiningOperationGuard.isActive()) {
             return;
         }
+
+        InitialBreakSnapshot initialBreak = INITIAL_BREAK_SNAPSHOTS.remove(serverPlayer.getUUID());
 
         Direction miningDirection = MiningDirectionTracker.consume(serverPlayer, position).orElse(null);
 
@@ -69,7 +90,13 @@ public final class MiningEventHandler {
                 );
             }
 
-            int destroyedCount = VeinMiningExecutor.execute(context, plan);
+            MiningDropSession dropSession = createDropSession(context, initialBreak);
+            int destroyedCount;
+            try {
+                destroyedCount = VeinMiningExecutor.execute(context, plan, dropSession);
+            } finally {
+                finishDropSession(dropSession);
+            }
             if (destroyedCount > 0) {
                 serverPlayer.connection.send(new ClientboundSetActionBarTextPacket(
                         VeinMiningActionBar.create(state.getBlock(), destroyedCount)
@@ -85,7 +112,35 @@ public final class MiningEventHandler {
         if (context.playerSettings().areaEnabled()
                 && (!context.config().areaMustSneak || serverPlayer.isCrouching())
                 && miningDirection != null) {
-            AreaMiningExecutor.execute(context, miningDirection);
+            MiningDropSession dropSession = createDropSession(context, initialBreak);
+            try {
+                AreaMiningExecutor.execute(context, miningDirection, dropSession);
+            } finally {
+                finishDropSession(dropSession);
+            }
         }
+    }
+
+    private static MiningDropSession createDropSession(MiningContext context, InitialBreakSnapshot initialBreak) {
+        if (!context.playerSettings().aggregateDropsAtFeet() && !context.playerSettings().directExperience()) {
+            return null;
+        }
+
+        MiningDropSession session = new MiningDropSession(context.player(), context.level(),
+                context.playerSettings().aggregateDropsAtFeet(), context.playerSettings().directExperience());
+        if (initialBreak != null && initialBreak.level() == context.level()
+                && initialBreak.position().equals(context.origin())) {
+            session.collectNewEntities(initialBreak.snapshot());
+        }
+        return session;
+    }
+
+    private static void finishDropSession(MiningDropSession session) {
+        if (session != null) {
+            session.finish();
+        }
+    }
+
+    private record InitialBreakSnapshot(ServerLevel level, BlockPos position, MiningDropSession.DropSnapshot snapshot) {
     }
 }

@@ -70,7 +70,8 @@ public final class PlayerSettingsService {
      * @throws IllegalArgumentException 当范围尺寸不符合服务器规则时抛出
      */
     public synchronized PlayerFastMineSettings updateFromClient(UUID playerId, boolean veinEnabled, boolean areaEnabled,
-                                                                 int areaWidth, int areaHeight, int areaDepth) {
+                                                                 int areaWidth, int areaHeight, int areaDepth,
+                                                                 boolean aggregateDropsAtFeet, boolean directExperience) {
         FastMineConfig config = configManager.getConfig();
 
         if (!isValidOddSize(areaWidth, config.minAreaWidth, config.maxAreaWidth)
@@ -84,7 +85,9 @@ public final class PlayerSettingsService {
                 areaEnabled,
                 areaWidth,
                 areaHeight,
-                areaDepth
+                areaDepth,
+                aggregateDropsAtFeet,
+                directExperience
         );
         update(playerId, updated);
         return updated;

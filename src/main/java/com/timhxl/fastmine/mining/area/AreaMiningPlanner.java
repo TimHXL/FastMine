@@ -25,8 +25,8 @@ public final class AreaMiningPlanner {
     public static List<BlockPos> calculateCandidates(MiningContext context, Direction miningDirection) {
         PlayerFastMineSettings settings = context.playerSettings();
         FastMineConfig config = context.config();
-        int width = clamp(settings.areaWidth(), 1, config.maxAreaWidth);
-        int height = clamp(settings.areaHeight(), 1, config.maxAreaHeight);
+        int width = clampOdd(settings.areaWidth(), config.minAreaWidth, config.maxAreaWidth);
+        int height = clampOdd(settings.areaHeight(), config.minAreaHeight, config.maxAreaHeight);
         int depth = getEffectiveDepth(settings, config, miningDirection);
         int widthStart = -(width / 2);
         int widthEnd = widthStart + width - 1;
@@ -52,7 +52,7 @@ public final class AreaMiningPlanner {
      */
     private static int getEffectiveDepth(PlayerFastMineSettings settings, FastMineConfig config,
                                          Direction miningDirection) {
-        int ordinaryDepth = clamp(settings.areaDepth(), 1, config.maxAreaDepth);
+        int ordinaryDepth = clamp(settings.areaDepth(), config.minAreaDepth, config.maxAreaDepth);
 
         if (!miningDirection.getAxis().isVertical() || !config.verticalMiningEnabled) {
             return ordinaryDepth;
@@ -75,5 +75,14 @@ public final class AreaMiningPlanner {
 
     private static int clamp(int value, int minimum, int maximum) {
         return Math.max(minimum, Math.min(value, maximum));
+    }
+
+    /** 将历史玩家设置修正到当前服务器的合法奇数宽高范围内。 */
+    private static int clampOdd(int value, int minimum, int maximum) {
+        int clamped = clamp(value, minimum, maximum);
+        if (clamped % 2 != 0) {
+            return clamped;
+        }
+        return clamped > minimum ? clamped - 1 : clamped + 1;
     }
 }

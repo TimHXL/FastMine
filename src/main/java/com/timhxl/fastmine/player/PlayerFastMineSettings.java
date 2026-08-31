@@ -12,7 +12,9 @@ public record PlayerFastMineSettings(
         boolean areaEnabled,
         int areaWidth,
         int areaHeight,
-        int areaDepth
+        int areaDepth,
+        boolean aggregateDropsAtFeet,
+        boolean directExperience
 ) {
     public static final int DEFAULT_AREA_WIDTH = 3;
     public static final int DEFAULT_AREA_HEIGHT = 3;
@@ -27,7 +29,9 @@ public record PlayerFastMineSettings(
                 config.defaultAreaEnabled,
                 config.defaultAreaWidth,
                 config.defaultAreaHeight,
-                config.defaultAreaDepth
+                config.defaultAreaDepth,
+                false,
+                false
         );
     }
 
@@ -35,20 +39,23 @@ public record PlayerFastMineSettings(
      * 返回仅修改连锁采集开关后的新设置。
      */
     public PlayerFastMineSettings withVeinEnabled(boolean enabled) {
-        return new PlayerFastMineSettings(enabled, areaEnabled, areaWidth, areaHeight, areaDepth);
+        return new PlayerFastMineSettings(enabled, areaEnabled, areaWidth, areaHeight, areaDepth,
+                aggregateDropsAtFeet, directExperience);
     }
 
     /**
      * 返回仅修改范围挖矿开关后的新设置。
      */
     public PlayerFastMineSettings withAreaEnabled(boolean enabled) {
-        return new PlayerFastMineSettings(veinEnabled, enabled, areaWidth, areaHeight, areaDepth);
+        return new PlayerFastMineSettings(veinEnabled, enabled, areaWidth, areaHeight, areaDepth,
+                aggregateDropsAtFeet, directExperience);
     }
 
     /**
      * 返回仅修改范围挖矿尺寸后的新设置。
      */
     public PlayerFastMineSettings withAreaSize(int width, int height, int depth) {
-        return new PlayerFastMineSettings(veinEnabled, areaEnabled, width, height, depth);
+        return new PlayerFastMineSettings(veinEnabled, areaEnabled, width, height, depth,
+                aggregateDropsAtFeet, directExperience);
     }
 }

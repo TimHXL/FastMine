@@ -101,6 +101,13 @@ public final class FastMineConfig {
     /** 是否额外跳过受保护结构已保存范围内的范围挖矿候选坐标。 */
     public boolean structureProtectionEnabled = true;
 
+    /**
+     * FastMine 破坏的额外方块掉落物是否直接转入执行挖掘的玩家背包。
+     *
+     * <p>仅影响范围挖掘和连锁采集额外破坏的方块；玩家手动挖掉的首个方块保持原版掉落行为。</p>
+     */
+    public boolean transferExtraDropsToPlayer = false;
+
     /** 需要保护的 Structure 注册表 ID。 */
     public Set<String> protectedStructures = new LinkedHashSet<>(Set.of(
             "minecraft:stronghold", "minecraft:ancient_city", "minecraft:mineshaft"
