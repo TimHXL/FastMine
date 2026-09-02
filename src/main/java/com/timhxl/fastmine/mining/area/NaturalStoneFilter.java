@@ -30,7 +30,6 @@ public final class NaturalStoneFilter {
      * 从候选位置中筛选出当前实际存在且属于天然石材 Tag 的方块。
      */
     public static List<BlockPos> filterAllowedPositions(MiningContext context, List<BlockPos> candidates) {
-        TagKey<Block> naturalStoneTag = resolveTag(context.config());
         List<BlockPos> allowedPositions = new ArrayList<>();
 
         for (BlockPos position : candidates) {

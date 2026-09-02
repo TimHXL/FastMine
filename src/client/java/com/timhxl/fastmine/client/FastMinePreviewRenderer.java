@@ -93,12 +93,21 @@ public final class FastMinePreviewRenderer {
 
         PreviewTarget target = new PreviewTarget(blockHit.getBlockPos().immutable(), blockHit.getDirection(),
                 FastMineClientSettings.getRevision(), minecraft.player.isShiftKeyDown());
+        int currentTick = minecraft.player.tickCount;
         if (activeRequest == null || !activeRequest.target().equals(target)) {
-            activeRequest = new PreviewRequest(target, ++nextRequestId);
-            previewState = null;
-            FastMineClientNetworking.requestMiningPreview(
-                    target.origin(), target.hitFace(), target.crouching(), activeRequest.requestId());
+            requestPreview(target, currentTick, false);
+        } else if (target.crouching() && !activeRequest.crouchRetrySent()
+                && currentTick - activeRequest.requestTick() >= 3) {
+            // Shift 刚按下时，服务端可能尚未处理玩家姿态同步包；仅补发一次，避免空预览一直停留。
+            requestPreview(target, currentTick, true);
         }
+    }
+
+    /** 发送一次预览请求；服务端仍自行确认准星目标和真实蹲下状态。 */
+    private static void requestPreview(PreviewTarget target, int requestTick, boolean crouchRetrySent) {
+        activeRequest = new PreviewRequest(target, ++nextRequestId, requestTick, crouchRetrySent);
+        previewState = null;
+        FastMineClientNetworking.requestMiningPreview(activeRequest.requestId());
     }
 
     /** 在绘制阶段提交红色、可穿墙的空心范围外框。 */
@@ -307,7 +316,7 @@ public final class FastMinePreviewRenderer {
     private record PreviewTarget(BlockPos origin, Direction hitFace, long settingsRevision, boolean crouching) {
     }
 
-    private record PreviewRequest(PreviewTarget target, int requestId) {
+    private record PreviewRequest(PreviewTarget target, int requestId, int requestTick, boolean crouchRetrySent) {
     }
 
     /** 一条沿世界网格轴延伸一个方块长度的外轮廓边。 */

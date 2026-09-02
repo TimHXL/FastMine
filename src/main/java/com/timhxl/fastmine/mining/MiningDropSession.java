@@ -28,6 +28,7 @@ public final class MiningDropSession {
     private final boolean aggregateDropsAtFeet;
     private final boolean directExperience;
     private final List<ItemStack> collectedItems = new ArrayList<>();
+    private final List<DropSnapshot> deferredSnapshots = new ArrayList<>();
 
     public MiningDropSession(ServerPlayer player, ServerLevel level, boolean aggregateDropsAtFeet,
                               boolean directExperience) {
@@ -81,8 +82,20 @@ public final class MiningDropSession {
         }
     }
 
+    /**
+     * 延后收集锚点方块的掉落物。Fabric 的 AFTER 事件可能早于该方块的实体掉落生成，
+     * 因此必须在当前破坏流程结束后再读取一次。
+     */
+    public void deferCollection(DropSnapshot snapshot) {
+        deferredSnapshots.add(snapshot);
+    }
+
     /** 生成合并后的物品。经验已在收集时通过原版拾取逻辑结算。 */
     public void finish() {
+        for (DropSnapshot snapshot : deferredSnapshots) {
+            collectNewEntities(snapshot);
+        }
+        deferredSnapshots.clear();
         if (aggregateDropsAtFeet) {
             for (ItemStack itemStack : collectedItems) {
                 ItemEntity itemEntity = new ItemEntity(level, player.getX(), player.getY(), player.getZ(), itemStack);

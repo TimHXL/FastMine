@@ -16,10 +16,6 @@ public record PlayerFastMineSettings(
         boolean aggregateDropsAtFeet,
         boolean directExperience
 ) {
-    public static final int DEFAULT_AREA_WIDTH = 3;
-    public static final int DEFAULT_AREA_HEIGHT = 3;
-    public static final int DEFAULT_AREA_DEPTH = 3;
-
     /**
      * 根据服务器全局配置创建首次加入服务器时使用的默认设置。
      */

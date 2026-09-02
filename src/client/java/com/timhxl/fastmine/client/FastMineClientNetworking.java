@@ -10,8 +10,6 @@ import com.timhxl.fastmine.network.FastMineAdminConfigUpdatePayload;
 import com.timhxl.fastmine.network.FastMineMiningPreviewRequestPayload;
 import com.timhxl.fastmine.network.FastMineMiningPreviewSyncPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 
 /**
  * FastMine 客户端个人设置网络入口。
@@ -92,10 +90,10 @@ public final class FastMineClientNetworking {
         }
     }
 
-    /** 请求服务器按真实连锁/范围规则计算当前准星目标的候选方块。 */
-    public static void requestMiningPreview(BlockPos origin, Direction hitFace, boolean crouching, int requestId) {
+    /** 请求服务器按其自身准星射线与玩家状态计算候选方块。 */
+    public static void requestMiningPreview(int requestId) {
         if (ClientPlayNetworking.canSend(FastMineMiningPreviewRequestPayload.TYPE)) {
-            ClientPlayNetworking.send(new FastMineMiningPreviewRequestPayload(origin, hitFace, crouching, requestId));
+            ClientPlayNetworking.send(new FastMineMiningPreviewRequestPayload(requestId));
         }
     }
 }

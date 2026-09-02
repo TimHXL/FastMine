@@ -73,17 +73,26 @@ public final class FastMineNetworking {
     }
 
     /**
-     * 按服务端当前方块、玩家设置、连锁组、天然石材和结构保护规则计算预览。
-     * 客户端只提交准星目标，绝不自行决定哪些方块可被破坏。
+     * 按服务端射线检测到的准星方块、玩家状态、连锁组、天然石材和结构保护规则计算预览。
+     * 客户端只提交请求序号，不能指定墙后方块或伪造蹲下状态。
      */
     private static void sendMiningPreview(ServerPlayer player, FastMineMiningPreviewRequestPayload payload) {
-        BlockPos origin = payload.origin();
         ServerLevel level = (ServerLevel) player.level();
-        if (!player.isAlive() || player.distanceToSqr(Vec3.atCenterOf(origin)) > 64.0D
-                || !level.hasChunkAt(origin)) {
+        if (!player.isAlive()) {
             sendMiningPreview(player, payload.requestId(), List.of());
             return;
         }
+
+        Vec3 eyePosition = player.getEyePosition();
+        Vec3 endPosition = eyePosition.add(player.getLookAngle().scale(6.0D));
+        BlockHitResult hitResult = level.clip(new ClipContext(eyePosition, endPosition,
+                ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
+        if (hitResult.getType() != HitResult.Type.BLOCK) {
+            sendMiningPreview(player, payload.requestId(), List.of());
+            return;
+        }
+
+        BlockPos origin = hitResult.getBlockPos();
 
         FastMineConfig config = FastMineMod.getConfigManager().getConfig();
         PlayerFastMineSettings settings = FastMineMod.getPlayerSettingsService().getOrCreate(player.getUUID());
@@ -94,7 +103,7 @@ public final class FastMineNetworking {
         }
 
         MiningContext context = new MiningContext(level, player, origin.immutable(), state, settings, config);
-        var veinPlan = VeinMiningTrigger.plan(context, payload.crouching());
+        var veinPlan = VeinMiningTrigger.plan(context, player.isCrouching());
         if (veinPlan.isPresent()) {
             List<BlockPos> positions = new ArrayList<>(veinPlan.get().candidates().size() + 1);
             positions.add(origin.immutable());
@@ -103,8 +112,8 @@ public final class FastMineNetworking {
             return;
         }
 
-        Direction miningDirection = payload.hitFace().getOpposite();
-        if (!settings.areaEnabled() || (config.areaMustSneak && !payload.crouching())
+        Direction miningDirection = hitResult.getDirection().getOpposite();
+        if (!settings.areaEnabled() || (config.areaMustSneak && !player.isCrouching())
                 || !player.getMainHandItem().is(ItemTags.PICKAXES)
                 || !NaturalStoneFilter.isAllowed(state, config)) {
             sendMiningPreview(player, payload.requestId(), List.of());
@@ -122,7 +131,9 @@ public final class FastMineNetworking {
     }
 
     private static void sendMiningPreview(ServerPlayer player, int requestId, List<BlockPos> positions) {
-        ServerPlayNetworking.send(player, new FastMineMiningPreviewSyncPayload(requestId, List.copyOf(positions)));
+        int endIndex = Math.min(positions.size(), FastMineMiningPreviewSyncPayload.MAX_POSITIONS);
+        ServerPlayNetworking.send(player, new FastMineMiningPreviewSyncPayload(
+                requestId, List.copyOf(positions.subList(0, endIndex))));
     }
 
     /**

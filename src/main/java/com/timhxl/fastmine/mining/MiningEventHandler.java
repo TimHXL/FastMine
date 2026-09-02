@@ -7,6 +7,7 @@ import com.timhxl.fastmine.vein.mining.VeinMiningActionBar;
 import com.timhxl.fastmine.vein.mining.VeinMiningTrigger;
 import com.timhxl.fastmine.player.PlayerFastMineSettings;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
@@ -17,6 +18,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class MiningEventHandler {
     private static final Map<UUID, InitialBreakSnapshot> INITIAL_BREAK_SNAPSHOTS = new ConcurrentHashMap<>();
+    private static final List<MiningDropSession> PENDING_DROP_SESSIONS = new ArrayList<>();
 
     private MiningEventHandler() {
     }
@@ -37,6 +41,7 @@ public final class MiningEventHandler {
         MiningDirectionTracker.register();
         PlayerBlockBreakEvents.BEFORE.register(MiningEventHandler::beforePlayerBlockBroken);
         PlayerBlockBreakEvents.AFTER.register(MiningEventHandler::onPlayerBlockBroken);
+        ServerTickEvents.END_SERVER_TICK.register(server -> finishPendingDropSessions());
     }
 
     /** 在原版生成锚点方块掉落物之前记录附近实体。 */
@@ -130,13 +135,29 @@ public final class MiningEventHandler {
                 context.playerSettings().aggregateDropsAtFeet(), context.playerSettings().directExperience());
         if (initialBreak != null && initialBreak.level() == context.level()
                 && initialBreak.position().equals(context.origin())) {
-            session.collectNewEntities(initialBreak.snapshot());
+            session.deferCollection(initialBreak.snapshot());
         }
         return session;
     }
 
     private static void finishDropSession(MiningDropSession session) {
         if (session != null) {
+            PENDING_DROP_SESSIONS.add(session);
+        }
+    }
+
+    /**
+     * 必须等到当前服务器 tick 完结。锚点方块的原版战利品可能在 AFTER 回调及普通任务之后才生成；
+     * 此时再按 BEFORE 快照收集，才能保证首方块和额外方块使用同一套聚合规则。
+     */
+    private static void finishPendingDropSessions() {
+        if (PENDING_DROP_SESSIONS.isEmpty()) {
+            return;
+        }
+
+        List<MiningDropSession> sessions = new ArrayList<>(PENDING_DROP_SESSIONS);
+        PENDING_DROP_SESSIONS.clear();
+        for (MiningDropSession session : sessions) {
             session.finish();
         }
     }

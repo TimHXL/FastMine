@@ -3,7 +3,7 @@
 	"package": "com.timhxl.fastmine.client.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
-		"ExampleClientMixin"
+		"FastMinePreviewRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

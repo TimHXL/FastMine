@@ -14,7 +14,7 @@ import java.util.List;
 /** 服务端返回的、已经过全部 FastMine 规则筛选的预览方块坐标。 */
 public record FastMineMiningPreviewSyncPayload(int requestId, List<BlockPos> positions)
         implements CustomPacketPayload {
-    private static final int MAX_POSITIONS = 10_000;
+    public static final int MAX_POSITIONS = 10_000;
     public static final Type<FastMineMiningPreviewSyncPayload> TYPE = new Type<>(
             Identifier.fromNamespaceAndPath(FastMineMod.MOD_ID, "mining_preview_sync")
     );
