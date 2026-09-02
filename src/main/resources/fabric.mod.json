@@ -3,13 +3,14 @@
 	"id": "fastmine",
 	"version": "${version}",
 	"name": "FastMine",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "A Fabric mod that provides configurable vein mining and area mining.",
 	"authors": [
-		"Me!"
+		"TimHXL"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/TimHXL/FastMine",
+		"sources": "https://github.com/TimHXL/FastMine",
+		"issues": "https://github.com/TimHXL/FastMine/issues"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/fastmine/icon.png",
