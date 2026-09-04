@@ -21,7 +21,8 @@ public final class MiningDropTransfer {
     /**
      * 在执行原版破坏流程前记录附近已有掉落物，随后仅收取这次破坏新生成的掉落物。
      */
-    public static boolean destroyBlock(ServerPlayer player, ServerLevel level, BlockPos position, boolean transferDrops) {
+    public static boolean destroyBlock(ServerPlayer player, ServerLevel level, BlockPos position, boolean transferDrops,
+                                       boolean consumeDurability, boolean consumeHunger) {
         AABB searchBox = AABB.ofSize(Vec3.atCenterOf(position), 2.0D, 2.0D, 2.0D);
         Set<Integer> existingDropIds = new HashSet<>();
         if (transferDrops) {
@@ -30,7 +31,7 @@ public final class MiningDropTransfer {
             }
         }
 
-        boolean destroyed = player.gameMode.destroyBlock(position);
+        boolean destroyed = MiningBlockBreaker.destroyBlock(player, position, consumeDurability, consumeHunger);
         if (destroyed && transferDrops) {
             transferNewDrops(player, level.getEntitiesOfClass(ItemEntity.class, searchBox), existingDropIds);
         }

@@ -96,7 +96,10 @@ public final class FastMineAreaRuleConfigScreen extends Screen {
             FastMineClientNetworking.updateGlobalSettings(settings.veinMustSneak(), settings.areaMustSneak(), settings.maxChain(),
                     read(minWidth), read(minHeight), read(minDepth), read(maxWidth), read(maxHeight), read(maxDepth),
                     read(defaultWidth), read(defaultHeight), read(defaultDepth), global.verticalMiningEnabled(), global.verticalMiningDepth(),
-                    global.structureProtectionEnabled(), global.transferExtraDropsToPlayer());
+                    global.structureProtectionEnabled(), global.transferExtraDropsToPlayer(),
+                    global.directExperience(),
+                    global.veinMiningConsumesDurability(), global.veinMiningConsumesHunger(),
+                    global.areaMiningConsumesDurability(), global.areaMiningConsumesHunger());
         } catch (NumberFormatException ignored) {
         }
     }

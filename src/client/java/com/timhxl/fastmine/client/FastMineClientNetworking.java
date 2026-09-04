@@ -65,13 +65,17 @@ public final class FastMineClientNetworking {
                                             int maxAreaWidth, int maxAreaHeight, int maxAreaDepth,
                                             int defaultAreaWidth, int defaultAreaHeight, int defaultAreaDepth,
                                             boolean verticalMiningEnabled, int verticalMiningDepth,
-                                            boolean structureProtectionEnabled, boolean transferExtraDropsToPlayer) {
+                                            boolean structureProtectionEnabled, boolean transferExtraDropsToPlayer,
+                                            boolean directExperience,
+                                            boolean veinMiningConsumesDurability, boolean veinMiningConsumesHunger,
+                                            boolean areaMiningConsumesDurability, boolean areaMiningConsumesHunger) {
         if (ClientPlayNetworking.canSend(FastMineGlobalSettingsUpdatePayload.TYPE)) {
             ClientPlayNetworking.send(new FastMineGlobalSettingsUpdatePayload(
                     veinMustSneak, areaMustSneak, maxChain, minAreaWidth, minAreaHeight, minAreaDepth,
                     maxAreaWidth, maxAreaHeight, maxAreaDepth, defaultAreaWidth, defaultAreaHeight, defaultAreaDepth,
                     verticalMiningEnabled, verticalMiningDepth, structureProtectionEnabled,
-                    transferExtraDropsToPlayer
+                    transferExtraDropsToPlayer, directExperience, veinMiningConsumesDurability, veinMiningConsumesHunger,
+                    areaMiningConsumesDurability, areaMiningConsumesHunger
             ));
         }
     }

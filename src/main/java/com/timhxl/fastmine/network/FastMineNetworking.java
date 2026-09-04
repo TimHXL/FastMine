@@ -201,6 +201,11 @@ public final class FastMineNetworking {
         config.verticalMiningDepth = payload.verticalMiningDepth();
         config.structureProtectionEnabled = payload.structureProtectionEnabled();
         config.transferExtraDropsToPlayer = payload.transferExtraDropsToPlayer();
+        config.directExperience = payload.directExperience();
+        config.veinMiningConsumesDurability = payload.veinMiningConsumesDurability();
+        config.veinMiningConsumesHunger = payload.veinMiningConsumesHunger();
+        config.areaMiningConsumesDurability = payload.areaMiningConsumesDurability();
+        config.areaMiningConsumesHunger = payload.areaMiningConsumesHunger();
         config.normalize();
         FastMineMod.getConfigManager().save();
         FastMineMod.getVeinMiningRuleRegistry().reload(server);

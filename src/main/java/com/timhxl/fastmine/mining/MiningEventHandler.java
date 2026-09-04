@@ -49,7 +49,7 @@ public final class MiningEventHandler {
                                                    BlockState state, BlockEntity blockEntity) {
         if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer
                 && !MiningOperationGuard.isActive()) {
-            MiningDropSession snapshotSession = new MiningDropSession(serverPlayer, serverLevel, false, false);
+            MiningDropSession snapshotSession = new MiningDropSession(serverPlayer, serverLevel, false, false, true, true);
             INITIAL_BREAK_SNAPSHOTS.put(serverPlayer.getUUID(), new InitialBreakSnapshot(
                     serverLevel, position.immutable(), snapshotSession.snapshot(position)));
         }
@@ -95,7 +95,7 @@ public final class MiningEventHandler {
                 );
             }
 
-            MiningDropSession dropSession = createDropSession(context, initialBreak);
+            MiningDropSession dropSession = createDropSession(context, initialBreak, true);
             int destroyedCount;
             try {
                 destroyedCount = VeinMiningExecutor.execute(context, plan, dropSession);
@@ -117,7 +117,7 @@ public final class MiningEventHandler {
         if (context.playerSettings().areaEnabled()
                 && (!context.config().areaMustSneak || serverPlayer.isCrouching())
                 && miningDirection != null) {
-            MiningDropSession dropSession = createDropSession(context, initialBreak);
+            MiningDropSession dropSession = createDropSession(context, initialBreak, false);
             try {
                 AreaMiningExecutor.execute(context, miningDirection, dropSession);
             } finally {
@@ -126,13 +126,21 @@ public final class MiningEventHandler {
         }
     }
 
-    private static MiningDropSession createDropSession(MiningContext context, InitialBreakSnapshot initialBreak) {
-        if (!context.playerSettings().aggregateDropsAtFeet() && !context.playerSettings().directExperience()) {
+    private static MiningDropSession createDropSession(MiningContext context, InitialBreakSnapshot initialBreak,
+                                                       boolean veinMode) {
+        // 管理员开关是最终权限：关闭后，玩家个人的掉落物聚合设置不得重新启用它。
+        boolean aggregateDropsAtFeet = context.config().transferExtraDropsToPlayer
+                && context.playerSettings().aggregateDropsAtFeet();
+        boolean directExperience = context.config().directExperience
+                && context.playerSettings().directExperience();
+        if (!aggregateDropsAtFeet && !directExperience) {
             return null;
         }
 
         MiningDropSession session = new MiningDropSession(context.player(), context.level(),
-                context.playerSettings().aggregateDropsAtFeet(), context.playerSettings().directExperience());
+                aggregateDropsAtFeet, directExperience,
+                veinMode ? context.config().veinMiningConsumesDurability : context.config().areaMiningConsumesDurability,
+                veinMode ? context.config().veinMiningConsumesHunger : context.config().areaMiningConsumesHunger);
         if (initialBreak != null && initialBreak.level() == context.level()
                 && initialBreak.position().equals(context.origin())) {
             session.deferCollection(initialBreak.snapshot());

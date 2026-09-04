@@ -15,7 +15,8 @@ public record FastMineSettingsSyncPayload(boolean veinEnabled, boolean areaEnabl
                                           int areaDepth, int minAreaWidth, int minAreaHeight, int minAreaDepth,
                                           int maxAreaWidth, int maxAreaHeight, int maxAreaDepth,
                                           boolean canManageServerSettings, boolean veinMustSneak, boolean areaMustSneak,
-                                          int maxChain, boolean aggregateDropsAtFeet, boolean directExperience)
+                                          int maxChain, boolean aggregateDropsAtFeet, boolean directExperience,
+                                          boolean adminAllowsDropAggregation, boolean adminAllowsDirectExperience)
         implements CustomPacketPayload {
     public static final Type<FastMineSettingsSyncPayload> TYPE = new Type<>(
             Identifier.fromNamespaceAndPath(FastMineMod.MOD_ID, "settings_sync")
@@ -42,6 +43,8 @@ public record FastMineSettingsSyncPayload(boolean veinEnabled, boolean areaEnabl
                             buffer.readBoolean(),
                             buffer.readInt(),
                             buffer.readBoolean(),
+                            buffer.readBoolean(),
+                            buffer.readBoolean(),
                             buffer.readBoolean()
                     );
                 }
@@ -65,6 +68,8 @@ public record FastMineSettingsSyncPayload(boolean veinEnabled, boolean areaEnabl
                     buffer.writeInt(payload.maxChain());
                     buffer.writeBoolean(payload.aggregateDropsAtFeet());
                     buffer.writeBoolean(payload.directExperience());
+                    buffer.writeBoolean(payload.adminAllowsDropAggregation());
+                    buffer.writeBoolean(payload.adminAllowsDirectExperience());
                 }
             };
 
@@ -87,7 +92,9 @@ public record FastMineSettingsSyncPayload(boolean veinEnabled, boolean areaEnabl
                 config.areaMustSneak,
                 maxChain,
                 settings.aggregateDropsAtFeet(),
-                settings.directExperience()
+                settings.directExperience(),
+                config.transferExtraDropsToPlayer,
+                config.directExperience
         );
     }
 

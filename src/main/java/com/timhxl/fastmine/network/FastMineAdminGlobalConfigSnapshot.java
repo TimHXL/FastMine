@@ -10,6 +10,9 @@ public record FastMineAdminGlobalConfigSnapshot(int minAreaWidth, int minAreaHei
                                                 int defaultAreaWidth, int defaultAreaHeight, int defaultAreaDepth,
                                                 boolean verticalMiningEnabled, int verticalMiningDepth,
                                                 boolean structureProtectionEnabled, boolean transferExtraDropsToPlayer,
+                                                boolean directExperience,
+                                                boolean veinMiningConsumesDurability, boolean veinMiningConsumesHunger,
+                                                boolean areaMiningConsumesDurability, boolean areaMiningConsumesHunger,
                                                 List<String> naturalStoneBlocks,
                                                 List<String> protectedStructures) {
     public static FastMineAdminGlobalConfigSnapshot from(FastMineConfig config) {
@@ -19,6 +22,9 @@ public record FastMineAdminGlobalConfigSnapshot(int minAreaWidth, int minAreaHei
                 config.defaultAreaWidth, config.defaultAreaHeight, config.defaultAreaDepth,
                 config.verticalMiningEnabled, config.verticalMiningDepth, config.structureProtectionEnabled,
                 config.transferExtraDropsToPlayer,
+                config.directExperience,
+                config.veinMiningConsumesDurability, config.veinMiningConsumesHunger,
+                config.areaMiningConsumesDurability, config.areaMiningConsumesHunger,
                 List.copyOf(config.naturalStoneBlocks), List.copyOf(config.protectedStructures)
         );
     }

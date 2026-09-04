@@ -71,7 +71,10 @@ public final class AreaMiningExecutor {
                 dropSession.destroyBlock(position);
             } else {
                 MiningDropTransfer.destroyBlock(player, context.level(), position,
-                        context.config().transferExtraDropsToPlayer);
+                        context.config().transferExtraDropsToPlayer
+                                && context.playerSettings().aggregateDropsAtFeet(),
+                        context.config().areaMiningConsumesDurability,
+                        context.config().areaMiningConsumesHunger);
             }
         }
     }

@@ -108,6 +108,21 @@ public final class FastMineConfig {
      */
     public boolean transferExtraDropsToPlayer = false;
 
+    /** FastMine 额外破坏方块产生的经验是否允许直接获取；玩家仍需开启个人选项。 */
+    public boolean directExperience = false;
+
+    /** 连锁采集额外破坏的方块是否消耗工具耐久。 */
+    public boolean veinMiningConsumesDurability = true;
+
+    /** 连锁采集额外破坏的方块是否消耗饥饿值。 */
+    public boolean veinMiningConsumesHunger = true;
+
+    /** 范围挖掘额外破坏的方块是否消耗工具耐久。 */
+    public boolean areaMiningConsumesDurability = true;
+
+    /** 范围挖掘额外破坏的方块是否消耗饥饿值。 */
+    public boolean areaMiningConsumesHunger = true;
+
     /** 需要保护的 Structure 注册表 ID。 */
     public Set<String> protectedStructures = new LinkedHashSet<>(Set.of(
             "minecraft:stronghold", "minecraft:ancient_city", "minecraft:mineshaft"

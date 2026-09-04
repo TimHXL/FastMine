@@ -14,7 +14,10 @@ public record FastMineGlobalSettingsUpdatePayload(boolean veinMustSneak, boolean
                                                   int maxAreaWidth, int maxAreaHeight, int maxAreaDepth,
                                                   int defaultAreaWidth, int defaultAreaHeight, int defaultAreaDepth,
                                                   boolean verticalMiningEnabled, int verticalMiningDepth,
-                                                  boolean structureProtectionEnabled, boolean transferExtraDropsToPlayer)
+                                                  boolean structureProtectionEnabled, boolean transferExtraDropsToPlayer,
+                                                  boolean directExperience,
+                                                  boolean veinMiningConsumesDurability, boolean veinMiningConsumesHunger,
+                                                  boolean areaMiningConsumesDurability, boolean areaMiningConsumesHunger)
         implements CustomPacketPayload {
     public static final Type<FastMineGlobalSettingsUpdatePayload> TYPE = new Type<>(
             Identifier.fromNamespaceAndPath(FastMineMod.MOD_ID, "global_settings_update")
@@ -28,7 +31,7 @@ public record FastMineGlobalSettingsUpdatePayload(boolean veinMustSneak, boolean
                             buffer.readBoolean(), buffer.readBoolean(), buffer.readInt(),
                             buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readInt(),
                             buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readBoolean(), buffer.readInt(), buffer.readBoolean(),
-                            buffer.readBoolean()
+                            buffer.readBoolean(), buffer.readBoolean(), buffer.readBoolean(), buffer.readBoolean(), buffer.readBoolean(), buffer.readBoolean()
                     );
                 }
 
@@ -50,6 +53,11 @@ public record FastMineGlobalSettingsUpdatePayload(boolean veinMustSneak, boolean
                     buffer.writeInt(payload.verticalMiningDepth());
                     buffer.writeBoolean(payload.structureProtectionEnabled());
                     buffer.writeBoolean(payload.transferExtraDropsToPlayer());
+                    buffer.writeBoolean(payload.directExperience());
+                    buffer.writeBoolean(payload.veinMiningConsumesDurability());
+                    buffer.writeBoolean(payload.veinMiningConsumesHunger());
+                    buffer.writeBoolean(payload.areaMiningConsumesDurability());
+                    buffer.writeBoolean(payload.areaMiningConsumesHunger());
                 }
             };
 

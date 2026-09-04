@@ -59,7 +59,10 @@ public final class VeinMiningExecutor {
             boolean destroyed = dropSession != null
                     ? dropSession.destroyBlock(position)
                     : MiningDropTransfer.destroyBlock(context.player(), context.level(), position,
-                            context.config().transferExtraDropsToPlayer);
+                            context.config().transferExtraDropsToPlayer
+                                    && context.playerSettings().aggregateDropsAtFeet(),
+                            context.config().veinMiningConsumesDurability,
+                            context.config().veinMiningConsumesHunger);
             if (destroyed) {
                 destroyedCount++;
             }

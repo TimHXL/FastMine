@@ -27,15 +27,19 @@ public final class MiningDropSession {
     private final ServerLevel level;
     private final boolean aggregateDropsAtFeet;
     private final boolean directExperience;
+    private final boolean consumeDurability;
+    private final boolean consumeHunger;
     private final List<ItemStack> collectedItems = new ArrayList<>();
     private final List<DropSnapshot> deferredSnapshots = new ArrayList<>();
 
     public MiningDropSession(ServerPlayer player, ServerLevel level, boolean aggregateDropsAtFeet,
-                              boolean directExperience) {
+                              boolean directExperience, boolean consumeDurability, boolean consumeHunger) {
         this.player = player;
         this.level = level;
         this.aggregateDropsAtFeet = aggregateDropsAtFeet;
         this.directExperience = directExperience;
+        this.consumeDurability = consumeDurability;
+        this.consumeHunger = consumeHunger;
     }
 
     /** 记录指定方块附近的现有实体。 */
@@ -55,7 +59,7 @@ public final class MiningDropSession {
     /** 破坏一个额外方块并立即收集其产生的新实体。 */
     public boolean destroyBlock(BlockPos position) {
         DropSnapshot snapshot = snapshot(position);
-        boolean destroyed = player.gameMode.destroyBlock(position);
+        boolean destroyed = MiningBlockBreaker.destroyBlock(player, position, consumeDurability, consumeHunger);
         if (destroyed) {
             collectNewEntities(snapshot);
         }
@@ -76,7 +80,9 @@ public final class MiningDropSession {
         if (directExperience) {
             for (ExperienceOrb experienceOrb : level.getEntitiesOfClass(ExperienceOrb.class, snapshot.searchBox())) {
                 if (!snapshot.experienceIds().contains(experienceOrb.getId()) && !experienceOrb.isRemoved()) {
-                    experienceOrb.playerTouch(player);
+                    // 直接结算经验，不依赖经验球与玩家的距离或原版拾取冷却。
+                    player.giveExperiencePoints(experienceOrb.getValue());
+                    experienceOrb.discard();
                 }
             }
         }

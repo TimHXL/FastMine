@@ -120,8 +120,8 @@ public final class FastMineSettingsScreen extends Screen {
 
         veinButton.active = available;
         areaButton.active = available;
-        aggregateDropsButton.active = available;
-        directExperienceButton.active = available;
+        aggregateDropsButton.active = available && settings.adminAllowsDropAggregation();
+        directExperienceButton.active = available && settings.adminAllowsDirectExperience();
         widthButton.active = available;
         heightButton.active = available;
         depthButton.active = available;

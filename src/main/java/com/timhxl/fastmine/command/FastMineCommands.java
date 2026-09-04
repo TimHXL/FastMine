@@ -39,12 +39,24 @@ public final class FastMineCommands {
                                         .executes(FastMineCommands::executeVeinSneakStatus)
                                         .then(Commands.literal("on").executes(context -> executeSetVeinMustSneak(context, true)))
                                         .then(Commands.literal("off").executes(context -> executeSetVeinMustSneak(context, false)))))
+                                .then(Commands.literal("durability")
+                                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                                        .then(Commands.literal("on").executes(context -> executeSetVeinDurability(context, true)))
+                                        .then(Commands.literal("off").executes(context -> executeSetVeinDurability(context, false))))
+                                .then(Commands.literal("hunger")
+                                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                                        .then(Commands.literal("on").executes(context -> executeSetVeinHunger(context, true)))
+                                        .then(Commands.literal("off").executes(context -> executeSetVeinHunger(context, false))))
                         .then(Commands.literal("drops")
                                 .then(Commands.literal("on").executes(context -> executeSetAggregateDrops(context, true)))
                                 .then(Commands.literal("off").executes(context -> executeSetAggregateDrops(context, false))))
                         .then(Commands.literal("experience")
                                 .then(Commands.literal("on").executes(context -> executeSetDirectExperience(context, true)))
-                                .then(Commands.literal("off").executes(context -> executeSetDirectExperience(context, false))))
+                                .then(Commands.literal("off").executes(context -> executeSetDirectExperience(context, false)))
+                                .then(Commands.literal("global")
+                                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                                        .then(Commands.literal("on").executes(context -> executeSetGlobalExperience(context, true)))
+                                        .then(Commands.literal("off").executes(context -> executeSetGlobalExperience(context, false)))))
                         .then(Commands.literal("area")
                                 .then(Commands.literal("on").executes(context -> executeSetArea(context, true)))
                                 .then(Commands.literal("off").executes(context -> executeSetArea(context, false)))
@@ -53,6 +65,14 @@ public final class FastMineCommands {
                                         .executes(FastMineCommands::executeAreaSneakStatus)
                                         .then(Commands.literal("on").executes(context -> executeSetAreaMustSneak(context, true)))
                                         .then(Commands.literal("off").executes(context -> executeSetAreaMustSneak(context, false))))
+                                .then(Commands.literal("durability")
+                                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                                        .then(Commands.literal("on").executes(context -> executeSetAreaDurability(context, true)))
+                                        .then(Commands.literal("off").executes(context -> executeSetAreaDurability(context, false))))
+                                .then(Commands.literal("hunger")
+                                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                                        .then(Commands.literal("on").executes(context -> executeSetAreaHunger(context, true)))
+                                        .then(Commands.literal("off").executes(context -> executeSetAreaHunger(context, false))))
                                 .then(Commands.literal("size")
                                         .then(Commands.argument("width", IntegerArgumentType.integer(1))
                                                 .then(Commands.argument("height", IntegerArgumentType.integer(1))
@@ -78,6 +98,13 @@ public final class FastMineCommands {
         source.sendSuccess(() -> Component.literal("§e/fastmine reload§r：重新加载服务器配置与连锁采集规则。"), false);
         source.sendSuccess(() -> Component.literal("§e/fastmine vein sneak [on|off]§r：查看或设置连锁采集是否必须蹲下。"), false);
         source.sendSuccess(() -> Component.literal("§e/fastmine area sneak [on|off]§r：查看或设置范围挖掘是否必须蹲下。"), false);
+        if (Commands.hasPermission(Commands.LEVEL_GAMEMASTERS).test(source)) {
+            source.sendSuccess(() -> Component.literal("§e/fastmine experience global on|off§r：管理员设置是否允许额外经验直接获得。"), false);
+            source.sendSuccess(() -> Component.literal("§e/fastmine vein durability on|off§r：管理员设置连锁采集是否消耗耐久。"), false);
+            source.sendSuccess(() -> Component.literal("§e/fastmine vein hunger on|off§r：管理员设置连锁采集是否消耗饥饿值。"), false);
+            source.sendSuccess(() -> Component.literal("§e/fastmine area durability on|off§r：管理员设置范围挖掘是否消耗耐久。"), false);
+            source.sendSuccess(() -> Component.literal("§e/fastmine area hunger on|off§r：管理员设置范围挖掘是否消耗饥饿值。"), false);
+        }
         return 1;
     }
 
@@ -205,6 +232,42 @@ public final class FastMineCommands {
                 "FastMine: area mining %s crouching."
                         .formatted(mustSneak ? "now requires" : "no longer requires")
         ), true);
+        return 1;
+    }
+
+    private static int executeSetVeinDurability(CommandContext<CommandSourceStack> context, boolean enabled) {
+        return setAdminFlag(context, enabled, "veinMiningConsumesDurability", "vein durability");
+    }
+
+    private static int executeSetVeinHunger(CommandContext<CommandSourceStack> context, boolean enabled) {
+        return setAdminFlag(context, enabled, "veinMiningConsumesHunger", "vein hunger");
+    }
+
+    private static int executeSetAreaDurability(CommandContext<CommandSourceStack> context, boolean enabled) {
+        return setAdminFlag(context, enabled, "areaMiningConsumesDurability", "area durability");
+    }
+
+    private static int executeSetAreaHunger(CommandContext<CommandSourceStack> context, boolean enabled) {
+        return setAdminFlag(context, enabled, "areaMiningConsumesHunger", "area hunger");
+    }
+
+    private static int executeSetGlobalExperience(CommandContext<CommandSourceStack> context, boolean enabled) {
+        return setAdminFlag(context, enabled, "directExperience", "global direct experience");
+    }
+
+    private static int setAdminFlag(CommandContext<CommandSourceStack> context, boolean enabled, String flag, String label) {
+        FastMineConfig config = FastMineMod.getConfigManager().getConfig();
+        switch (flag) {
+            case "veinMiningConsumesDurability" -> config.veinMiningConsumesDurability = enabled;
+            case "veinMiningConsumesHunger" -> config.veinMiningConsumesHunger = enabled;
+            case "areaMiningConsumesDurability" -> config.areaMiningConsumesDurability = enabled;
+            case "areaMiningConsumesHunger" -> config.areaMiningConsumesHunger = enabled;
+            case "directExperience" -> config.directExperience = enabled;
+            default -> throw new IllegalArgumentException("Unknown FastMine admin flag: " + flag);
+        }
+        FastMineMod.getConfigManager().save();
+        context.getSource().sendSuccess(() -> Component.literal(
+                "FastMine: %s is now %s.".formatted(label, enabled ? "ON" : "OFF")), true);
         return 1;
     }
 
