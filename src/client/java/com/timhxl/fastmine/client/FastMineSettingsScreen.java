@@ -3,7 +3,6 @@ package com.timhxl.fastmine.client;
 import com.timhxl.fastmine.network.FastMineSettingsSyncPayload;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
@@ -19,11 +18,7 @@ public final class FastMineSettingsScreen extends Screen {
     private Button widthButton;
     private Button heightButton;
     private Button depthButton;
-    private Button veinSneakButton;
-    private Button areaSneakButton;
     private Button adminButton;
-    private Button maxChainSaveButton;
-    private EditBox maxChainBox;
     private long displayedRevision = Long.MIN_VALUE;
 
     public FastMineSettingsScreen() {
@@ -56,17 +51,6 @@ public final class FastMineSettingsScreen extends Screen {
         depthButton = addRenderableWidget(Button.builder(Component.empty(), button -> changeDepth())
                 .bounds(left + 136, top + 116, 64, 20)
                 .build());
-        veinSneakButton = addRenderableWidget(Button.builder(Component.empty(), button -> toggleVeinSneak())
-                .bounds(left, top + 76, 200, 20)
-                .build());
-        areaSneakButton = addRenderableWidget(Button.builder(Component.empty(), button -> toggleAreaSneak())
-                .bounds(left, top + 100, 200, 20)
-                .build());
-        maxChainBox = addRenderableWidget(new EditBox(font, left + 94, top + 126, 48, 20,
-                Component.translatable("screen.fastmine.admin.max_chain")));
-        maxChainBox.setMaxLength(5);
-        maxChainSaveButton = addRenderableWidget(Button.builder(Component.translatable("screen.fastmine.admin.save"), button -> saveMaxChain())
-                .bounds(left + 146, top + 126, 54, 20).build());
         adminButton = addRenderableWidget(Button.builder(Component.translatable("screen.fastmine.admin.open"),
                         button -> openAdminScreen())
                 .bounds(left, top + 148, 200, 20)
@@ -125,16 +109,8 @@ public final class FastMineSettingsScreen extends Screen {
         widthButton.active = available;
         heightButton.active = available;
         depthButton.active = available;
-        veinSneakButton.visible = false;
-        areaSneakButton.visible = false;
-        veinSneakButton.active = false;
-        areaSneakButton.active = false;
         adminButton.visible = canManageServerSettings;
         adminButton.active = canManageServerSettings;
-        maxChainBox.visible = false;
-        maxChainBox.active = false;
-        maxChainSaveButton.visible = false;
-        maxChainSaveButton.active = false;
 
         if (!available) {
             veinButton.setMessage(Component.translatable("screen.fastmine.waiting"));
@@ -144,10 +120,7 @@ public final class FastMineSettingsScreen extends Screen {
             widthButton.setMessage(Component.empty());
             heightButton.setMessage(Component.empty());
             depthButton.setMessage(Component.empty());
-            veinSneakButton.setMessage(Component.empty());
-            areaSneakButton.setMessage(Component.empty());
             adminButton.setMessage(Component.empty());
-            maxChainBox.setValue("");
             return;
         }
 
@@ -160,9 +133,6 @@ public final class FastMineSettingsScreen extends Screen {
         widthButton.setMessage(Component.translatable("screen.fastmine.width", settings.areaWidth()));
         heightButton.setMessage(Component.translatable("screen.fastmine.height", settings.areaHeight()));
         depthButton.setMessage(Component.translatable("screen.fastmine.depth", settings.areaDepth()));
-        veinSneakButton.setMessage(Component.translatable("screen.fastmine.vein_sneak", state(settings.veinMustSneak())));
-        areaSneakButton.setMessage(Component.translatable("screen.fastmine.area_sneak", state(settings.areaMustSneak())));
-        if (!maxChainBox.isFocused()) maxChainBox.setValue(String.valueOf(settings.maxChain()));
     }
 
     private Component state(boolean enabled) {
@@ -237,29 +207,9 @@ public final class FastMineSettingsScreen extends Screen {
                 aggregateDropsAtFeet, directExperience);
     }
 
-    private void toggleVeinSneak() {
-        openAdminScreen();
-    }
-
-    private void toggleAreaSneak() {
-        openAdminScreen();
-    }
-
     private void openAdminScreen() {
         FastMineClientNetworking.requestAdminConfig();
         minecraft.gui.setScreen(new FastMineGlobalConfigScreen(this));
-    }
-
-    private void saveMaxChain() {
-        openAdminScreen();
-    }
-
-    private int parseMaxChain() {
-        try {
-            return Integer.parseInt(maxChainBox.getValue());
-        } catch (NumberFormatException exception) {
-            return 0;
-        }
     }
 
     private static int nextOdd(int current, int minimum, int maximum) {
